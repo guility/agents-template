@@ -43,6 +43,10 @@ if [[ "$scope" == all || "$scope" == universal ]]; then
   fi
 fi
 
+if [[ ( "$scope" == all || "$scope" == universal ) && -d "$root/src/tests/unit/ci" ]]; then
+  python3 -m unittest discover -s "$root/src/tests/unit/ci" -v
+fi
+
 if [[ "$scope" == universal ]]; then
   echo "Universal fast checks passed for $branch ($(( ${#files[@]} )) changed files)."
   exit 0

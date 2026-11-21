@@ -52,6 +52,7 @@ class TemplateAndPathTests(unittest.TestCase):
 
     def test_ci_entrypoints_target_nested_templates(self):
         workflow_dir = REPOSITORY_ROOT / ".github/workflows"
+        fast_checks = (workflow_dir / "fast-checks.yml").read_text(encoding="utf-8")
         (workflow_dir / "ci-cd.yml").read_text(encoding="utf-8")
         gitlab_entrypoint = (REPOSITORY_ROOT / ".gitlab-ci.yml").read_text(
             encoding="utf-8"
@@ -65,3 +66,4 @@ class TemplateAndPathTests(unittest.TestCase):
                 f"working-directory: src/templates/{language}", template_workflow
             )
         self.assertIn("/.gitlab/ci/.gitlab-ci.yml", gitlab_entrypoint)
+        self.assertIn("CARGO_TARGET_DIR: ${{ runner.temp }}/cargo-target", fast_checks)

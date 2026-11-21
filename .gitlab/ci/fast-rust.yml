@@ -13,7 +13,7 @@ fast-rust-checks:
     - apt-get update && apt-get install -y --no-install-recommends bash git pkg-config libssl-dev
     - rustup component add clippy rustfmt --toolchain 1.100.0
   script:
-    - RUSTUP_TOOLCHAIN=1.100.0 bash scripts/ci/checks/fast-push-checks.sh "$CI_COMMIT_REF_NAME" "${CI_MERGE_REQUEST_DIFF_BASE_SHA:-$CI_COMMIT_BEFORE_SHA}" "$CI_COMMIT_SHA" rust
+    - RUSTUP_TOOLCHAIN=1.100.0 bash scripts/ci/checks/fast-push-checks.sh "${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-$CI_COMMIT_REF_NAME}" "${CI_MERGE_REQUEST_DIFF_BASE_SHA:-$CI_COMMIT_BEFORE_SHA}" "$CI_COMMIT_SHA" rust
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push" || $CI_PIPELINE_SOURCE == "merge_request_event"'
-      changes: ['**/*.rs', '**/Cargo.toml', '**/Cargo.lock', '**/rust-toolchain.toml']
+      changes: ['**/*.rs', '**/Cargo.toml', '**/Cargo.lock', '**/rust-toolchain', '**/rust-toolchain.toml', '**/rustfmt.toml', '**/.rustfmt.toml', '**/clippy.toml', '**/.clippy.toml', '**/.cargo/config', '**/.cargo/config.toml']

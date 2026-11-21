@@ -42,7 +42,7 @@ jobs:
           name: dependency-metrics
           path: artifacts/reports/dependencies
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-        if: inputs.image_result == 'success' && inputs.language_result != 'success'
+        if: inputs.image_result == 'success'
         continue-on-error: true
         with:
           name: image-coverage
@@ -53,36 +53,6 @@ jobs:
         with:
           name: mutator-results
           path: artifacts/reports/mutation
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-        if: inputs.language_result == 'success'
-        continue-on-error: true
-        with:
-          name: coverage-python
-          path: artifacts/reports/coverage/python
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-        if: inputs.language_result == 'success'
-        continue-on-error: true
-        with:
-          name: coverage-nodejs
-          path: artifacts/reports/coverage/nodejs
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-        if: inputs.language_result == 'success'
-        continue-on-error: true
-        with:
-          name: coverage-rust
-          path: artifacts/reports/coverage/rust
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-        if: inputs.language_result == 'success'
-        continue-on-error: true
-        with:
-          name: coverage-go
-          path: artifacts/reports/coverage/go
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-        if: inputs.language_result == 'success'
-        continue-on-error: true
-        with:
-          name: coverage-csharp
-          path: artifacts/reports/coverage/csharp
       - name: Render the gate table and metrics matrix
         env:
           BRANCH_RESULT: ${{ inputs.branch_result }}

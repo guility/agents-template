@@ -10,7 +10,7 @@ fast-node-checks:
     - apt-get update && apt-get install -y --no-install-recommends bash git
     - npm install --global prettier@3.6.2
   script:
-    - bash scripts/ci/checks/fast-push-checks.sh "$CI_COMMIT_REF_NAME" "${CI_MERGE_REQUEST_DIFF_BASE_SHA:-$CI_COMMIT_BEFORE_SHA}" "$CI_COMMIT_SHA" nodejs
+    - bash scripts/ci/checks/fast-push-checks.sh "${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-$CI_COMMIT_REF_NAME}" "${CI_MERGE_REQUEST_DIFF_BASE_SHA:-$CI_COMMIT_BEFORE_SHA}" "$CI_COMMIT_SHA" nodejs
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push" || $CI_PIPELINE_SOURCE == "merge_request_event"'
-      changes: ['**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx', '**/package.json', '**/pnpm-lock.yaml']
+      changes: ['**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx', '**/package.json', '**/package-lock.json', '**/pnpm-lock.yaml', '**/.prettierrc*', '**/prettier.config.*', '**/.editorconfig', '**/.prettierignore']

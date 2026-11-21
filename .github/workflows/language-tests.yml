@@ -3,6 +3,10 @@ name: Language Tests
 on:
   workflow_call:
     inputs:
+      suite:
+        type: string
+        required: false
+        default: all
       run_python:
         type: boolean
         required: true
@@ -40,22 +44,32 @@ jobs:
     name: Python Tests
     if: inputs.run_python
     uses: ./.github/workflows/python-tests.yml
+    with:
+      suite: ${{ inputs.suite }}
   nodejs-test:
     name: Node.js Tests
     if: inputs.run_nodejs
     uses: ./.github/workflows/nodejs-tests.yml
+    with:
+      suite: ${{ inputs.suite }}
   rust-test:
     name: Rust Tests
     if: inputs.run_rust
     uses: ./.github/workflows/rust-tests.yml
+    with:
+      suite: ${{ inputs.suite }}
   go-test:
     name: Go Tests
     if: inputs.run_go
     uses: ./.github/workflows/go-tests.yml
+    with:
+      suite: ${{ inputs.suite }}
   csharp-test:
     name: C# Tests
     if: inputs.run_csharp
     uses: ./.github/workflows/csharp-tests.yml
+    with:
+      suite: ${{ inputs.suite }}
 
   test-summary:
     name: Collect Language Test Status

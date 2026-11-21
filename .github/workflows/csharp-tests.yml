@@ -2,6 +2,8 @@ name: C# Tests
 
 on:
   workflow_call:
+    inputs:
+      suite: { type: string, required: false, default: all }
 
 jobs:
   csharp-test:
@@ -9,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PROJECT_ROOT: ${{ github.workspace }}/src/templates/csharp
+      TEST_SUITE: ${{ inputs.suite }}
     defaults:
       run:
         working-directory: src/templates/csharp
@@ -33,13 +36,5 @@ jobs:
       - name: Build
         run: dotnet build --no-restore
       
-      - name: Run unit and native mutation suites
+      - name: Run requested test suites
         run: bash "$GITHUB_WORKSPACE/scripts/common/run-tests.sh"
-
-      - name: Upload coverage
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: coverage-csharp
-          path: test-results/csharp/**/coverage.cobertura.xml
-          if-no-files-found: warn
-

@@ -2,22 +2,28 @@
 set -euo pipefail
 
 root="$(git rev-parse --show-toplevel)"
-export PATH="${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH"
-if command -v go >/dev/null; then export PATH="$(go env GOPATH)/bin:$PATH"; fi
 remote_name="${1:-origin}"
 refs=()
 while read -r local_ref local_sha remote_ref remote_sha; do
-  [[ -n "${local_ref:-}" ]] || continue
-  [[ "$local_ref" == refs/heads/* ]] || continue
-  refs+=("${local_ref#refs/heads/}|$remote_sha|$local_sha")
+  [[ -n "${remote_ref:-}" ]] || continue
+  [[ "$remote_ref" == refs/heads/* ]] || continue
+  refs+=("${local_ref:-}|${local_sha:-}|${remote_ref#refs/heads/}|${remote_sha:-}")
 done
 
 for item in "${refs[@]}"; do
-  IFS='|' read -r branch _ _ <<< "$item"
+  IFS='|' read -r local_ref local_sha branch remote_sha <<< "$item"
   bash "$root/scripts/common/validate-branch.sh" "$branch"
+  if [[ "$local_ref" == refs/heads/* ]]; then
+    bash "$root/scripts/common/validate-branch.sh" "${local_ref#refs/heads/}"
+  fi
 done
+
+export PATH="${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH"
+if command -v go >/dev/null; then export PATH="$(go env GOPATH)/bin:$PATH"; fi
+
 for item in "${refs[@]}"; do
-  IFS='|' read -r branch base head <<< "$item"
+  IFS='|' read -r local_ref head branch base <<< "$item"
+  [[ -n "$head" && ! "$head" =~ ^0+$ ]] || continue
   if [[ -z "$base" || "$base" =~ ^0+$ ]]; then
     remote_main="refs/remotes/$remote_name/main"
     if ! git show-ref --verify --quiet "$remote_main"; then
@@ -28,7 +34,7 @@ for item in "${refs[@]}"; do
     fi
     base="$(bash "$root/scripts/common/git/resolve-diff-base.sh" "$head" "$base" "$remote_name")"
   fi
-  if git diff --name-only "$base" "$head" | grep -Eq '\.rs$|(^|/)(Cargo\.toml|Cargo\.lock|rust-toolchain\.toml)$'; then
+  if git diff --name-only "$base" "$head" | grep -Eq '\.rs$|(^|/)(Cargo\.toml|Cargo\.lock|rust-toolchain(\.toml)?|rustfmt\.toml|\.rustfmt\.toml|clippy\.toml|\.clippy\.toml|\.cargo/config(\.toml)?)$'; then
     export RUSTUP_TOOLCHAIN=1.100.0
   fi
   for tool in gitleaks lizard; do

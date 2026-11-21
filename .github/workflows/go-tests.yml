@@ -2,6 +2,8 @@ name: Go Tests
 
 on:
   workflow_call:
+    inputs:
+      suite: { type: string, required: false, default: all }
 
 jobs:
   go-test:
@@ -9,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PROJECT_ROOT: ${{ github.workspace }}/src/templates/go
+      TEST_SUITE: ${{ inputs.suite }}
     defaults:
       run:
         working-directory: src/templates/go
@@ -42,11 +45,3 @@ jobs:
       
       - name: Run tests
         run: bash "$GITHUB_WORKSPACE/scripts/common/run-tests.sh"
-      
-      - name: Upload coverage
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: coverage-go
-          path: test-results/go-coverage.out
-          if-no-files-found: warn
-

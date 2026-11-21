@@ -3,7 +3,7 @@ branch-name-validation:
   image: alpine:3.21.3
   before_script: [apk add --no-cache bash git]
   script:
-    - bash scripts/common/validate-branch.sh "$CI_COMMIT_REF_NAME"
+    - bash scripts/common/validate-branch.sh "${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-$CI_COMMIT_REF_NAME}"
     - mkdir -p artifacts/reports/quality
     - printf 'passed\n' > artifacts/reports/quality/branch.status
   artifacts:
@@ -28,7 +28,7 @@ fast-universal-checks:
     - mkdir -p "$GITLEAKS_INSTALL_DIR" && bash scripts/ci/checks/install-gitleaks.sh
     - export PATH="$GITLEAKS_INSTALL_DIR:$PATH"
   script:
-    - bash scripts/ci/checks/fast-push-checks.sh "$CI_COMMIT_REF_NAME" "${CI_MERGE_REQUEST_DIFF_BASE_SHA:-$CI_COMMIT_BEFORE_SHA}" "$CI_COMMIT_SHA" universal
+    - bash scripts/ci/checks/fast-push-checks.sh "${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-$CI_COMMIT_REF_NAME}" "${CI_MERGE_REQUEST_DIFF_BASE_SHA:-$CI_COMMIT_BEFORE_SHA}" "$CI_COMMIT_SHA" universal
     - mkdir -p artifacts/reports/quality
     - printf 'passed\n' > artifacts/reports/quality/fast.status
   artifacts:
