@@ -7,14 +7,14 @@ jobs:
   mutator:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
           python-version: '3.14.8'
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22.17.1'
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
           go-version: '1.24.2'
       - name: Install pinned tools and Rust
@@ -29,7 +29,7 @@ jobs:
         run: bash scripts/ci/quality-tools/mutation/prepare-mutator-targets.sh
       - name: Run Mutator on Python, Node.js, Rust and Go
         run: bash scripts/ci/quality-tools/mutation/run-mutator-all.sh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: mutator-results
           path: artifacts/reports/mutation/
