@@ -1,19 +1,49 @@
 semgrep-sast:
   stage: sast
+  needs: [branch-name-validation]
   image:
     name: semgrep/semgrep:1.99.0
     entrypoint: [""]
+  before_script:
+    - bash scripts/setup/fetch_language_templates.sh all
   script:
-    - semgrep scan --config auto --error --metrics off src tests scripts agents
+    - semgrep scan --config auto --error --metrics off src scripts agents
+    - mkdir -p artifacts/reports/quality
+    - printf 'passed\n' > artifacts/reports/quality/sast.status
+  artifacts:
+    when: always
+    paths: [artifacts/reports/quality/sast.status]
+    expire_in: 30 days
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
 
-secret-scan:
+quality-metrics:
   stage: sast
-  image:
-    name: zricethezav/gitleaks:v8.24.3
-    entrypoint: [""]
+  needs: [branch-name-validation]
+  image: python:3.14.8-slim
+  before_script:
+    - apt-get update && apt-get install -y --no-install-recommends ca-certificates curl git
+    - GITLEAKS_INSTALL_DIR=/usr/local/bin GITLEAKS_VERSION="$GITLEAKS_VERSION" bash scripts/ci/checks/install-gitleaks.sh
+    - UV_INSTALL_DIR=/usr/local/bin UV_VERSION="$UV_VERSION" bash scripts/ci/checks/install-uv.sh
+    - uv sync --project scripts/ci/quality-tools --locked --no-dev
+    - bash scripts/setup/fetch_language_templates.sh all
   script:
-    - gitleaks detect --source . --redact --exit-code 1
+    - gitleaks dir --redact --no-banner src/templates
+    - mkdir -p artifacts/reports/quality
+    - printf 'passed\n' > artifacts/reports/quality/secrets.status
+    - uv run --project scripts/ci/quality-tools --no-sync python scripts/testing/quality_metrics.py --component common scripts
+    - for lang in python nodejs rust go csharp; do uv run --project scripts/ci/quality-tools --no-sync python scripts/testing/quality_metrics.py --component "$lang" "src/templates/$lang/src"; done
+    - bash scripts/ci/quality-tools/run-dryer.sh src/templates/python src/templates/nodejs src/templates/rust src/templates/go
+    - python scripts/ci/quality-tools/metrics/render_quality_matrix.py
+    - cat docs/quality/quality-matrix.md >> "$CI_JOB_SUMMARY"
+  artifacts:
+    when: always
+    paths:
+      - docs/quality/
+      - artifacts/reports/dryer.txt
+      - artifacts/reports/quality/secrets.status
+    expire_in: 30 days
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'

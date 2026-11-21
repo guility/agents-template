@@ -17,11 +17,11 @@ run_nodejs_unit_tests() {
     cd "$ROOT_DIR" || return 1
 
     # Определение менеджера пакетов
-    local runner="npm test"
+    local runner="npm run test:unit"
     if [ -f "pnpm-lock.yaml" ]; then
-        runner="pnpm test"
+        runner="corepack pnpm run test:unit"
     elif [ -f "yarn.lock" ]; then
-        runner="yarn test"
+        runner="yarn test:unit"
     fi
 
     if $runner 2>&1 | tee "$ROOT_DIR/test-results/unit-nodejs.log"; then

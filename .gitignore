@@ -1,5 +1,8 @@
 ```
 # Build artifacts
+/.metrics/
+/artifacts/
+/test-results/
 src/templates/
 bin/
 obj/

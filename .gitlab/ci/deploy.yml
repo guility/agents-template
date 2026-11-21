@@ -1,8 +1,9 @@
 deploy-production:
   stage: deploy
   image: alpine:3.21.3
-  dependencies:
-    - push-images
+  needs:
+    - job: push-images
+      artifacts: true
   environment:
     name: production
   when: manual

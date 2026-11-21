@@ -1,0 +1,84 @@
+name: Run summary
+
+on:
+  workflow_call:
+    inputs:
+      branch_result: { type: string, required: true }
+      fast_result: { type: string, required: true }
+      quality_result: { type: string, required: true }
+      image_result: { type: string, required: true }
+      language_result: { type: string, required: true }
+      mutation_result: { type: string, required: true }
+      push_result: { type: string, required: true }
+      publish_result: { type: string, required: true }
+
+jobs:
+  summary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        if: inputs.quality_result == 'success'
+        continue-on-error: true
+        with:
+          name: quality-metrics
+          path: docs/quality
+      - uses: actions/download-artifact@v4
+        if: inputs.image_result == 'success'
+        continue-on-error: true
+        with:
+          name: dependency-metrics
+          path: artifacts/reports/dependencies
+      - uses: actions/download-artifact@v4
+        if: inputs.image_result == 'success' && inputs.language_result != 'success'
+        continue-on-error: true
+        with:
+          name: image-coverage
+          path: artifacts/reports/coverage
+      - uses: actions/download-artifact@v4
+        if: inputs.mutation_result == 'success'
+        continue-on-error: true
+        with:
+          name: mutator-results
+          path: artifacts/reports/mutation
+      - uses: actions/download-artifact@v4
+        if: inputs.language_result == 'success'
+        continue-on-error: true
+        with:
+          name: coverage-python
+          path: artifacts/reports/coverage/python
+      - uses: actions/download-artifact@v4
+        if: inputs.language_result == 'success'
+        continue-on-error: true
+        with:
+          name: coverage-nodejs
+          path: artifacts/reports/coverage/nodejs
+      - uses: actions/download-artifact@v4
+        if: inputs.language_result == 'success'
+        continue-on-error: true
+        with:
+          name: coverage-rust
+          path: artifacts/reports/coverage/rust
+      - uses: actions/download-artifact@v4
+        if: inputs.language_result == 'success'
+        continue-on-error: true
+        with:
+          name: coverage-go
+          path: artifacts/reports/coverage/go
+      - uses: actions/download-artifact@v4
+        if: inputs.language_result == 'success'
+        continue-on-error: true
+        with:
+          name: coverage-csharp
+          path: artifacts/reports/coverage/csharp
+      - name: Render the gate table and metrics matrix
+        env:
+          BRANCH_RESULT: ${{ inputs.branch_result }}
+          FAST_RESULT: ${{ inputs.fast_result }}
+          QUALITY_RESULT: ${{ inputs.quality_result }}
+          IMAGE_RESULT: ${{ inputs.image_result }}
+          LANGUAGE_RESULT: ${{ inputs.language_result }}
+          MUTATION_RESULT: ${{ inputs.mutation_result }}
+          PUSH_RESULT: ${{ inputs.push_result }}
+          PUBLISH_RESULT: ${{ inputs.publish_result }}
+        run: bash scripts/ci/quality-tools/render-run-summary.sh

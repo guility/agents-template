@@ -7,7 +7,10 @@ run_csharp_tests() {
     if [ -n "$sln_file" ]; then
         project_file="$sln_file"
     else
-        project_file=$(find "$ROOT_DIR" -name "*.csproj" -print -quit)
+        project_file=$(find "$ROOT_DIR" -name "*.Tests.csproj" -print -quit)
+        if [ -z "$project_file" ]; then
+            project_file=$(find "$ROOT_DIR" -name "*.csproj" -print -quit)
+        fi
     fi
 
     if [ -z "$project_file" ]; then
@@ -23,12 +26,36 @@ run_csharp_tests() {
     cd "$(dirname "$project_file")" || return 1
 
     # Запуск тестов с покрытием
-    if dotnet test "$project_file" --no-restore --collect:"XPlat Code Coverage" --results-directory "$ROOT_DIR/test-results/csharp" 2>&1 | tee "$ROOT_DIR/test-results/csharp-tests.log"; then
-        log_info "C# tests passed"
+    local coverage_dir="$ROOT_DIR/test-results/csharp/run-$(date +%s)-$$"
+    mkdir -p "$coverage_dir"
+    if dotnet test "$project_file" --no-restore --collect:"XPlat Code Coverage" --results-directory "$coverage_dir" 2>&1 | tee "$ROOT_DIR/test-results/csharp-tests.log"; then
+        local coverage_file rates line_rate branch_rate
+        coverage_file=$(find "$coverage_dir" -name coverage.cobertura.xml -print -quit)
+        if [ -z "$coverage_file" ]; then
+            log_error "C# coverage report is missing"
+            return 1
+        fi
+        rates=$(sed -n 's/.*line-rate="\([^"]*\)".*branch-rate="\([^"]*\)".*/\1 \2/p' "$coverage_file" | head -1)
+        read -r line_rate branch_rate <<< "$rates"
+        if ! awk -v lines="$line_rate" -v branches="$branch_rate" 'BEGIN { exit !(lines >= 1 && branches >= 1) }'; then
+            log_error "C# line or branch coverage is below 100% (${line_rate:-missing}, ${branch_rate:-missing})"
+            return 1
+        fi
+        log_info "C# tests passed with 100% line and branch coverage"
     else
         log_error "C# tests failed"
         return 1
     fi
+}
+
+run_csharp_mutation_tests() {
+    local project_file
+    project_file=$(find "$ROOT_DIR" -name "*.csproj" -print -quit)
+    [ -n "$project_file" ] || { log_error "No .csproj file found; cannot run C# mutation tests"; return 1; }
+    command -v dotnet >/dev/null || { log_error "dotnet not found; cannot run C# mutation tests"; return 1; }
+    cd "$(dirname "$project_file")" || return 1
+    dotnet tool restore --tool-manifest .config/dotnet-tools.json
+    dotnet stryker 2>&1 | tee "$ROOT_DIR/test-results/mutation-csharp.log"
 }
 
 # Основная функция

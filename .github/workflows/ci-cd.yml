@@ -1,46 +1,88 @@
-name: CI/CD Pipeline
+name: Quality pipeline
 
 on:
   push:
+    branches: ['**']
+  pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
-  detect-changes:
-    uses: ./.github/workflows/detect-changes.yml
+  branch-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate branch before other checks
+        env:
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+        run: bash scripts/common/validate-branch.sh "$BRANCH_NAME"
 
-  security-scan:
-    needs: detect-changes
-    uses: ./.github/workflows/security-scan.yml
+  fast-checks:
+    needs: branch-gate
+    uses: ./.github/workflows/fast-checks.yml
 
-  complexity-check:
-    needs: detect-changes
-    uses: ./.github/workflows/complexity-check.yml
+  prebuild-gates:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    needs: fast-checks
+    uses: ./.github/workflows/prebuild-gates.yml
 
-  language-tests:
-    needs: [detect-changes, security-scan, complexity-check]
-    if: ${{ needs.detect-changes.outputs.has-python == 'true' || needs.detect-changes.outputs.has-nodejs == 'true' || needs.detect-changes.outputs.has-rust == 'true' || needs.detect-changes.outputs.has-go == 'true' || needs.detect-changes.outputs.has-csharp == 'true' || needs.detect-changes.outputs.has-templates == 'true' }}
+  image-gate:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    needs: prebuild-gates
+    uses: ./.github/workflows/image-gate.yml
+
+  language-suites:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: image-gate
     uses: ./.github/workflows/language-tests.yml
     with:
-      run_python: ${{ needs.detect-changes.outputs.has-python == 'true' || needs.detect-changes.outputs.has-templates == 'true' }}
-      run_nodejs: ${{ needs.detect-changes.outputs.has-nodejs == 'true' || needs.detect-changes.outputs.has-templates == 'true' }}
-      run_rust: ${{ needs.detect-changes.outputs.has-rust == 'true' || needs.detect-changes.outputs.has-templates == 'true' }}
-      run_go: ${{ needs.detect-changes.outputs.has-go == 'true' || needs.detect-changes.outputs.has-templates == 'true' }}
-      run_csharp: ${{ needs.detect-changes.outputs.has-csharp == 'true' || needs.detect-changes.outputs.has-templates == 'true' }}
+      run_python: true
+      run_nodejs: true
+      run_rust: true
+      run_go: true
+      run_csharp: true
 
-  contract-validation:
-    needs: detect-changes
-    if: ${{ needs.detect-changes.outputs.has-contracts == 'true' }}
-    uses: ./.github/workflows/contract-validation.yml
+  mutator:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [language-suites, prebuild-gates]
+    uses: ./.github/workflows/mutation-tests.yml
+
+  push-images:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [image-gate, language-suites, mutator]
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/push-images.yml
 
   summary:
-    needs: [security-scan, complexity-check, language-tests]
     if: always()
-    uses: ./.github/workflows/summary.yml
+    needs:
+      - branch-gate
+      - fast-checks
+      - prebuild-gates
+      - image-gate
+      - language-suites
+      - mutator
+      - push-images
+      - publish-quality-metrics
+    uses: ./.github/workflows/run-summary.yml
     with:
-      security_result: ${{ needs.security-scan.result }}
-      complexity_result: ${{ needs.complexity-check.result }}
-      python_result: ${{ needs.language-tests.outputs.python_result || needs.language-tests.result }}
-      nodejs_result: ${{ needs.language-tests.outputs.nodejs_result || needs.language-tests.result }}
-      rust_result: ${{ needs.language-tests.outputs.rust_result || needs.language-tests.result }}
-      go_result: ${{ needs.language-tests.outputs.go_result || needs.language-tests.result }}
-      csharp_result: ${{ needs.language-tests.outputs.csharp_result || needs.language-tests.result }}
+      branch_result: ${{ needs.branch-gate.result }}
+      fast_result: ${{ needs.fast-checks.result }}
+      quality_result: ${{ needs.prebuild-gates.result }}
+      image_result: ${{ needs.image-gate.result }}
+      language_result: ${{ needs.language-suites.result }}
+      mutation_result: ${{ needs.mutator.result }}
+      push_result: ${{ needs.push-images.result }}
+      publish_result: ${{ needs.publish-quality-metrics.result }}
+
+  publish-quality-metrics:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [branch-gate, fast-checks, prebuild-gates, image-gate, language-suites, mutator, push-images]
+    permissions:
+      contents: write
+    uses: ./.github/workflows/publish-quality-metrics.yml

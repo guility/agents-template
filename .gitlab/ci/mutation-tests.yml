@@ -1,0 +1,40 @@
+.mutator-template:
+  stage: post_merge
+  before_script:
+    - apt-get update && apt-get install -y --no-install-recommends bash ca-certificates curl git
+    - UV_INSTALL_DIR=/usr/local/bin UV_VERSION="$UV_VERSION" bash scripts/ci/checks/install-uv.sh
+    - uv sync --project scripts/ci/quality-tools --locked --no-dev
+    - bash scripts/ci/quality-tools/mutation/prepare-mutator-language.sh "$MUTATION_LANGUAGE"
+  script:
+    - bash scripts/ci/quality-tools/mutation/run-mutator.sh "src/templates/$MUTATION_LANGUAGE"
+    - mkdir -p "artifacts/reports/mutation/$MUTATION_LANGUAGE/.metrics/mutate"
+    - cp -a "src/templates/$MUTATION_LANGUAGE/.metrics/mutate/." "artifacts/reports/mutation/$MUTATION_LANGUAGE/.metrics/mutate/"
+  artifacts:
+    when: always
+    paths: [artifacts/reports/mutation/]
+    expire_in: 30 days
+  rules: [{ if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH' }]
+
+mutator-python:
+  extends: .mutator-template
+  needs: [{ job: post-merge-python-tests, artifacts: false }]
+  image: python:3.14.8-slim
+  variables: { MUTATION_LANGUAGE: python }
+
+mutator-nodejs:
+  extends: .mutator-template
+  needs: [{ job: post-merge-nodejs-tests, artifacts: false }]
+  image: node:22.17.1-bookworm
+  variables: { MUTATION_LANGUAGE: nodejs }
+
+mutator-rust:
+  extends: .mutator-template
+  needs: [{ job: post-merge-rust-tests, artifacts: false }]
+  image: rust:1.100.0-slim
+  variables: { MUTATION_LANGUAGE: rust }
+
+mutator-go:
+  extends: .mutator-template
+  needs: [{ job: post-merge-go-tests, artifacts: false }]
+  image: golang:1.24.2-bookworm
+  variables: { MUTATION_LANGUAGE: go }

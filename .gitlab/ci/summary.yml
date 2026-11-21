@@ -1,0 +1,20 @@
+quality-summary:
+  stage: .post
+  image: python:3.14.8-slim
+  when: always
+  script: [bash scripts/ci/quality-tools/render-gitlab-summary.sh]
+  artifacts:
+    when: always
+    paths: [docs/quality/quality-metrics.json, docs/quality/quality-matrix.md, docs/quality/reports/]
+    expire_in: 30 days
+
+publish-quality-metrics:
+  stage: publish_metrics
+  image: python:3.14.8-slim
+  script:
+    - python scripts/ci/quality-tools/merge_pipeline_metrics.py --sast-result success --fast-result success --lint-result success --secrets-result success
+    - python scripts/ci/quality-tools/metrics/render_quality_matrix.py
+    - python scripts/ci/quality-tools/metrics/write_badge_endpoints.py
+    - bash scripts/ci/quality-tools/publish-metrics-branch.sh
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'

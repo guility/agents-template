@@ -10,8 +10,14 @@ for project_root in "$root"/src/templates/*; do
   language="${project_root##*/}"
   [[ -z "${TEST_LANGUAGE:-}" || "$language" == "$TEST_LANGUAGE" ]] || continue
   test_dir="$project_root/tests/$suite"
-  [[ -d "$test_dir" ]] || continue
-  if ! find "$test_dir" -type f ! -name '__init__.py' ! -name '.gitkeep' -print -quit | grep -q .; then
+  has_suite=false
+  if [[ -d "$test_dir" ]] \
+    && find "$test_dir" -type f ! -name '__init__.py' ! -name '.gitkeep' -print -quit | grep -q .; then
+    has_suite=true
+  elif [[ "$language" == rust && -s "$project_root/tests/$suite.rs" ]]; then
+    has_suite=true
+  fi
+  if [[ "$has_suite" != true ]]; then
     continue
   fi
   PROJECT_ROOT="$project_root" TEST_SUITE="$suite" bash "$root/scripts/common/run-tests.sh"

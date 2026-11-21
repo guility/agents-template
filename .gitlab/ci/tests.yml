@@ -1,13 +1,22 @@
-required-tests:
+unit-tests:
   stage: tests
-  image: ubuntu:26.04
+  needs:
+    - job: scan-images
+      artifacts: false
+    - job: build-images
+      artifacts: true
+  image: python:3.14.8-slim
   before_script:
-    - apt-get update
-    - apt-get install -y --no-install-recommends ca-certificates curl git
-    - curl --fail --location --silent --show-error https://astral.sh/uv/install.sh | sh
-    - export PATH="$HOME/.local/bin:$PATH"
-  script:
-    - bash scripts/ci/run-required-tests.sh python
+    - apt-get update && apt-get install -y --no-install-recommends bash buildah ca-certificates curl git
+    - UV_INSTALL_DIR=/usr/local/bin UV_VERSION="$UV_VERSION" bash scripts/ci/checks/install-uv.sh
+  variables:
+    STORAGE_DRIVER: vfs
+    BUILDAH_FORMAT: docker
+  script: [bash scripts/ci/images/buildah/run-unit-from-buildah.sh]
+  artifacts:
+    when: always
+    paths: [artifacts/reports/coverage-image/]
+    expire_in: 30 days
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-    - when: never

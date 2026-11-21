@@ -14,7 +14,7 @@ jobs:
         working-directory: src/templates/go
     strategy:
       matrix:
-        go-version: ['1.20', '1.21', '1.22']
+        go-version: ['1.24.2']
     steps:
       - uses: actions/checkout@v4
 
@@ -32,13 +32,21 @@ jobs:
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+      - name: Install pinned Gremlins mutation runner
+        working-directory: .
+        env:
+          GREMLINS_INSTALL_DIR: ${{ runner.temp }}/go-bin
+        run: |
+          bash scripts/ci/checks/install-gremlins.sh
+          echo "$GREMLINS_INSTALL_DIR" >> "$GITHUB_PATH"
       
       - name: Run tests
         run: bash "$GITHUB_WORKSPACE/scripts/common/run-tests.sh"
       
       - name: Upload coverage
-        uses: codecov/codecov-action@v4
+        uses: actions/upload-artifact@v4
         with:
-          files: ./test-results/go-coverage.out
-          flags: go
+          name: coverage-go
+          path: test-results/go-coverage.out
+          if-no-files-found: warn
 

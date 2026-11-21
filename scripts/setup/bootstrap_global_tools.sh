@@ -5,29 +5,37 @@
 install_global_tools() {
     log_step "Installing global development tools..."
     
-    # Python инструменты
-    if command -v pip &> /dev/null || command -v pip3 &> /dev/null; then
-        log_info "Installing Python tools..."
-        pip install -q black isort flake8 pylint pytest pytest-cov lizard semgrep pip-audit || true
+    # Pin the tools used by the measured local fast checks.
+    if command -v python3 &> /dev/null; then
+        log_info "Installing pinned fast Python checks..."
+        python3 -m pip install --user -q lizard==1.25.0 ruff==0.17.6
+    fi
+    if [ -x "$PROJECT_ROOT/scripts/ci/checks/install-gitleaks.sh" ]; then
+        GITLEAKS_VERSION=8.30.1 bash "$PROJECT_ROOT/scripts/ci/checks/install-gitleaks.sh"
     fi
     
     # Node.js инструменты (если есть npm)
     if command -v npm &> /dev/null; then
         log_info "Installing Node.js tools..."
-        npm install -g prettier eslint typescript ts-node 2>/dev/null || true
+        npm install -g prettier@3.6.2 2>/dev/null || true
     fi
     
     # Rust инструменты
     if command -v cargo &> /dev/null; then
         log_info "Installing Rust tools..."
-        cargo install cargo-audit cargo-deny cargo-mutants 2>/dev/null || true
+        if command -v rustup &> /dev/null; then
+            rustup toolchain install 1.100.0 --profile minimal --component clippy,rustfmt,llvm-tools-preview
+            cargo +1.100.0 install cargo-llvm-cov --version 0.9.1 --locked
+            cargo +1.100.0 install cargo-mutants --version 27.1.0 --locked
+        else
+            cargo install cargo-llvm-cov --version 0.9.1 --locked
+        fi
     fi
     
     # Go инструменты
     if command -v go &> /dev/null; then
         log_info "Installing Go tools..."
-        go install golang.org/x/tools/cmd/goimports@latest 2>/dev/null || true
-        go install honnef.co/go/tools/cmd/staticcheck@latest 2>/dev/null || true
+        go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.8.0 2>/dev/null || true
     fi
     
     # Shell инструменты

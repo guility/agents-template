@@ -16,13 +16,13 @@
 ### 2. Скрипты автоматизации
 | Скрипт | Назначение |
 |--------|------------|
-| `scripts/common/validation/post_agent_validator.py` | Пост-агент валидация (6 проверок) |
-| `scripts/testing/mutation_runner.py` | Генерация ≥2 мутаций на функцию |
-| `scripts/testing/complexity_analyzer.py` | Анализ CNC ≤ 10 |
-| `scripts/testing/traceability_matrix.py` | Трейсабилити REQ→Tests→Code |
-| `scripts/security/security_engine.sh` | gitleaks+trivy+semgrep |
-| `scripts/ci/unified_ci_runner.sh` | Адаптивный CI/CD (GitHub/GitLab) |
-| `.hooks/pre-commit` | Пре-коммит проверки |
+| `scripts/common/validate-branch.sh` | Проверка имён веток и языковых исключений |
+| `scripts/ci/checks/fast-push-checks.sh` | Gitleaks, Lizard и быстрый языковой lint/format по изменённым файлам |
+| `scripts/ci/test-{unit,integration,mutation,e2e}.sh` | Отдельные обязательные suite-runner скрипты |
+| `scripts/ci/run-required-tests.sh` | Загрузка закреплённого пакета, установка зависимостей и запуск suite-runner скриптов |
+| `scripts/ci/images/` | Сборка production/tests, сканирование образов и запуск тестов по image ID |
+| `scripts/ci/quality-tools/` | Метрики, CI summary, бейджи, Dryer и Mutator |
+| `.hooks/pre-commit`, `.hooks/pre-push` | Проверки staged diff и исходящих коммитов перед отправкой |
 
 ### 3. Пороги качества (100%)
 - ✅ Unit tests coverage: **100%**
@@ -36,11 +36,11 @@
 ### 4. Языковые шаблоны (5 языков)
 | Язык | Ветка | Текущий тег |
 |------|-------|-------------|
-| Python | `python` | `python/v2.0.0` (Python 3.14.x, Ubuntu 26.04 LTS) |
-| Node.js/TypeScript | `nodejs` | `nodejs/v1.0.1` |
-| Rust | `rust` | `rust/v1.0.1` |
-| Go | `go` | `go/v1.0.1` |
-| C# | `csharp` | `csharp/v1.0.1` |
+| Python | `python` | `python/v2.0.1` (Python 3.14.8) |
+| Node.js/TypeScript | `nodejs` | `nodejs/v1.0.2` |
+| Rust | `rust` | `rust/v1.0.2` |
+| Go | `go` | `go/v1.0.2` |
+| C# | `csharp` | `csharp/v1.0.3` |
 
 ### 5. Workflow разработки
 ```
@@ -71,14 +71,11 @@
 - `agents/best_practices/testing_best_practices.md` - TDD, пирамида, мутации
 - `agents/best_practices/coding_best_practices.md` - SOLID, KISS, DRY
 
-### 8. CI/CD Pipeline (7 стадий)
-1. `sast` — при создании и обновлении MR, проверки без сборки
-2. `build` — сборка образов
-3. `security` — сканирование собранных образов
-4. `tests` — unit, integration, mutation, e2e и контракты
-5. `push` — публикация образов после успешных проверок
-6. `fetch_secrets` — опционально, получение секретов перед deploy
-7. `deploy` — ручной deploy опубликованного образа только по digest из registry
+### 8. CI/CD pipeline
+- Каждый push сначала проходит проверку имени ветки, затем запускает быстрый набор проверок по изменённым файлам.
+- MR pipeline выполняет SAST, метрики сложности и Dryer, собирает `production` и основанный на нём `tests`, сканирует построенные образы и запускает unit suite из того же `tests` image ID.
+- После merge запускаются integration/e2e suites, native и Uncle Bob Mutator mutation, остальные security/release проверки и публикация матрицы метрик и бейджей в README.
+- GitHub Actions и GitLab CI используют одинаковые правила событий; tag и schedule pipelines отключены. Deploy доступен вручную только для опубликованного неизменяемого image digest.
 
 ## 📊 Статистика
 - Файлов создано: **150+**
@@ -100,8 +97,8 @@ uv sync
 # Запуск всех проверок
 ../../scripts/ci/unified_ci_runner.sh
 
-# Пре-коммит хук
-ln -s ../../.hooks/pre-commit .git/hooks/pre-commit
+# Настройка локальных хуков
+bash scripts/setup/bootstrap_git.sh
 ```
 
 ## 📁 Структура репозитория

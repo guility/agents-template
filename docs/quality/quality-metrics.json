@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "commit": "n/a",
+  "components": {
+    "common": {"name": "Common", "report": "reports/common.md", "metrics": {}},
+    "python": {"name": "Python", "report": "reports/python.md", "metrics": {}},
+    "nodejs": {"name": "Node.js / TypeScript", "report": "reports/nodejs.md", "metrics": {}},
+    "rust": {"name": "Rust", "report": "reports/rust.md", "metrics": {}},
+    "go": {"name": "Go", "report": "reports/go.md", "metrics": {}},
+    "csharp": {"name": "C#", "report": "reports/csharp.md", "metrics": {}}
+  }
+}

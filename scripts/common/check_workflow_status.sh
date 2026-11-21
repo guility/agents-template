@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+source "$(dirname "${BASH_SOURCE[0]}")/workflow/workflow_tests_status.sh"
 
 # Скрипт проверки статуса workflow
 # Валидирует, что переход между этапами разработки корректен
@@ -72,38 +73,7 @@ else
     echo "  ❌ Отсутствуют дизайн-документы для $missing_design требований"
 fi
 
-# Этап 3: Проверка тестов
-echo ""
-echo "=== Этап 3: Тесты ==="
-
-tests_dir="./src/tests"
-if [[ -d "$tests_dir" ]]; then
-    unit_count=$(find "$tests_dir/unit" -type f 2>/dev/null | wc -l)
-    integration_count=$(find "$tests_dir/integration" -type f 2>/dev/null | wc -l)
-    e2e_count=$(find "$tests_dir/e2e" -type f 2>/dev/null | wc -l)
-    
-    echo "  Unit тестов: $unit_count"
-    echo "  Integration тестов: $integration_count"
-    echo "  E2E тестов: $e2e_count"
-    
-    if [[ "$implemented_count" -gt 0 && "$unit_count" -eq 0 ]]; then
-        echo "  ⚠️  Есть реализованные требования, но нет unit тестов"
-    fi
-else
-    echo "  ⚠️  Директория тестов не найдена"
-fi
-
-# Этап 4: Проверка покрытия мутационными тестами
-echo ""
-echo "=== Этап 4: Мутационное тестирование ==="
-
-mutation_dir="$tests_dir/mutation"
-if [[ -d "$mutation_dir" ]]; then
-    mutation_count=$(find "$mutation_dir" -type f 2>/dev/null | wc -l)
-    echo "  Мутационных тестов: $mutation_count"
-else
-    echo "  ℹ️  Директория мутационных тестов не найдена (будет создана при необходимости)"
-fi
+print_test_status "$implemented_count"
 
 echo ""
 echo "=== Итоговый статус ==="
