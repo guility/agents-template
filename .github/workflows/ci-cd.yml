@@ -28,6 +28,10 @@ jobs:
   run-prebuild-gates:
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     needs: run-fast-checks
+    permissions:
+      contents: read
+      pull-requests: read
+      security-events: write
     uses: ./.github/workflows/prebuild-gates.yml
 
   run-image-gate:

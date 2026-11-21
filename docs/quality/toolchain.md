@@ -8,6 +8,7 @@ The measured push set is Gitleaks for outgoing commits, Lizard CCN for changed s
 
 - GitHub Actions are pinned to immutable commit SHAs and use the Node 24 runtime. Self-hosted GitHub runners must be version 2.327.1 or newer.
 - Semgrep 1.99.0 runs full source SAST on merge requests and protected-main pipelines.
+- CodeQL Action v4.39.3 with CodeQL bundle 2.27.5 analyzes Python and GitHub Actions source on merge requests and protected-main pipelines. Fork PRs still run the analysis without SARIF upload because their token is read-only; Semgrep remains the credentialless SAST result for those runs.
 - Lizard 1.25.0 provides CCN, Cognitive Complexity, nesting, NLOC and Halstead metrics through its `-Ecognitive`, `-ENS` and `-Ehalstead` extensions.
 - Maintainability Index is info-only and uses one function-level formula across components: `100 × (171 − 5.2 ln(max(1, H-volume)) − 0.23 × CCN − 16.2 ln(max(1, NLOC))) / 171`, clamped to 0–100. The matrix reports the minimum function score; zero volume or NLOC uses 1 for the logarithm.
 - Trivy 0.73.0 scans lockfiles and the exact `production` and `tests` image archives built earlier in that pipeline. HIGH/CRITICAL findings with a published `FixedVersion` block the gate. Findings without an upstream fix remain in Trivy JSON reports and count metrics for review; they do not block by themselves. The dependency-vulnerability metric counts all HIGH/CRITICAL findings, including those without a fix.
