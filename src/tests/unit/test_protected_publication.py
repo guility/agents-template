@@ -12,7 +12,13 @@ class ProtectedPublicationTests(unittest.TestCase):
             "&& github.ref_protected",
             workflow,
         )
-        self.assertIn("needs: [image-gate, language-suites, mutator]", workflow)
+        self.assertIn(
+            "needs: [run-image-gate, required-gate-checks, language-suites, mutator]",
+            workflow,
+        )
+        for gate in ("fast-checks", "prebuild-gates", "image-gate"):
+            with self.subTest(gate=gate):
+                self.assertIn(f"gate: {gate}", workflow)
 
     def test_metrics_publication_is_limited_to_protected_main(self) -> None:
         workflow = (ROOT / ".github/workflows/ci-cd.yml").read_text()

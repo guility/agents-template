@@ -6,6 +6,7 @@ The measured push set is Gitleaks for outgoing commits, Lizard CCN for changed s
 
 ## Full pipeline
 
+- GitHub Actions are pinned to immutable commit SHAs and use the Node 24 runtime. Self-hosted GitHub runners must be version 2.327.1 or newer.
 - Semgrep 1.99.0 runs full source SAST on merge requests and protected-main pipelines.
 - Lizard 1.25.0 provides CCN, Cognitive Complexity, nesting, NLOC and Halstead metrics through its `-Ecognitive`, `-ENS` and `-Ehalstead` extensions.
 - Maintainability Index is info-only and uses one function-level formula across components: `100 × (171 − 5.2 ln(max(1, H-volume)) − 0.23 × CCN − 16.2 ln(max(1, NLOC))) / 171`, clamped to 0–100. The matrix reports the minimum function score; zero volume or NLOC uses 1 for the logarithm.

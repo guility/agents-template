@@ -14,29 +14,55 @@ jobs:
   branch-gate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Validate branch before other checks
         env:
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
         run: bash scripts/common/validate-branch.sh "$BRANCH_NAME"
 
-  fast-checks:
+  run-fast-checks:
     needs: branch-gate
     uses: ./.github/workflows/fast-checks.yml
 
-  prebuild-gates:
+  run-prebuild-gates:
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
-    needs: fast-checks
+    needs: run-fast-checks
     uses: ./.github/workflows/prebuild-gates.yml
 
-  image-gate:
+  run-image-gate:
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
-    needs: prebuild-gates
+    needs: run-prebuild-gates
     uses: ./.github/workflows/image-gate.yml
+
+  required-gate-checks:
+    if: always()
+    needs: [branch-gate, run-fast-checks, run-prebuild-gates, run-image-gate]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - gate: fast-checks
+            result: ${{ needs.run-fast-checks.result }}
+            required: true
+          - gate: prebuild-gates
+            result: ${{ needs.run-prebuild-gates.result }}
+            required: ${{ github.event_name == 'pull_request' || github.ref == 'refs/heads/main' }}
+          - gate: image-gate
+            result: ${{ needs.run-image-gate.result }}
+            required: ${{ github.event_name == 'pull_request' || github.ref == 'refs/heads/main' }}
+    name: ${{ matrix.gate }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - env:
+          GATE_NAME: ${{ matrix.gate }}
+          GATE_RESULT: ${{ matrix.result }}
+          GATE_REQUIRED: ${{ matrix.required }}
+        run: bash scripts/ci/checks/status/assert-gate-result.sh "$GATE_NAME" "$GATE_RESULT" "$GATE_REQUIRED"
 
   language-suites:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push' && github.ref_protected
-    needs: image-gate
+    needs: [run-image-gate, required-gate-checks]
     uses: ./.github/workflows/language-tests.yml
     with:
       suite: post-merge
@@ -48,12 +74,12 @@ jobs:
 
   mutator:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push' && github.ref_protected
-    needs: [language-suites, prebuild-gates]
+    needs: [language-suites, run-prebuild-gates]
     uses: ./.github/workflows/mutation-tests.yml
 
   push-images:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push' && github.ref_protected
-    needs: [image-gate, language-suites, mutator]
+    needs: [run-image-gate, required-gate-checks, language-suites, mutator]
     permissions:
       contents: read
       packages: write
@@ -63,9 +89,10 @@ jobs:
     if: always()
     needs:
       - branch-gate
-      - fast-checks
-      - prebuild-gates
-      - image-gate
+      - run-fast-checks
+      - run-prebuild-gates
+      - run-image-gate
+      - required-gate-checks
       - language-suites
       - mutator
       - push-images
@@ -73,9 +100,9 @@ jobs:
     uses: ./.github/workflows/run-summary.yml
     with:
       branch_result: ${{ needs.branch-gate.result }}
-      fast_result: ${{ needs.fast-checks.result }}
-      quality_result: ${{ needs.prebuild-gates.result }}
-      image_result: ${{ needs.image-gate.result }}
+      fast_result: ${{ needs.run-fast-checks.result }}
+      quality_result: ${{ needs.run-prebuild-gates.result }}
+      image_result: ${{ needs.run-image-gate.result }}
       language_result: ${{ needs.language-suites.result }}
       mutation_result: ${{ needs.mutator.result }}
       push_result: ${{ needs.push-images.result }}
@@ -83,7 +110,7 @@ jobs:
 
   publish-quality-metrics:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.ref_protected
-    needs: [branch-gate, fast-checks, prebuild-gates, image-gate, language-suites, mutator, push-images]
+    needs: [branch-gate, run-fast-checks, run-prebuild-gates, run-image-gate, required-gate-checks, language-suites, mutator, push-images]
     permissions:
       contents: write
     uses: ./.github/workflows/publish-quality-metrics.yml
