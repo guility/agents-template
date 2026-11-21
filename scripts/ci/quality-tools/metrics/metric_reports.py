@@ -1,6 +1,7 @@
 """Read coverage, dependency and mutation reports for quality metrics."""
 
 import re
+
 from defusedxml import ElementTree as ET
 
 
