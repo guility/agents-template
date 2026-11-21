@@ -31,15 +31,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Generate summary
+        env:
+          SECURITY_RESULT: ${{ inputs.security_result }}
+          COMPLEXITY_RESULT: ${{ inputs.complexity_result }}
+          PYTHON_RESULT: ${{ inputs.python_result }}
+          NODEJS_RESULT: ${{ inputs.nodejs_result }}
+          RUST_RESULT: ${{ inputs.rust_result }}
+          GO_RESULT: ${{ inputs.go_result }}
+          CSHARP_RESULT: ${{ inputs.csharp_result }}
         run: |
-          echo "## CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Security Scan | ${{ inputs.security_result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Complexity Check | ${{ inputs.complexity_result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Python Tests | ${{ inputs.python_result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Node.js Tests | ${{ inputs.nodejs_result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Rust Tests | ${{ inputs.rust_result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Go Tests | ${{ inputs.go_result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| C# Tests | ${{ inputs.csharp_result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "## CI/CD Pipeline Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Check | Status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-------|--------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Security Scan | $SECURITY_RESULT |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Complexity Check | $COMPLEXITY_RESULT |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Python Tests | $PYTHON_RESULT |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Node.js Tests | $NODEJS_RESULT |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Rust Tests | $RUST_RESULT |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Go Tests | $GO_RESULT |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| C# Tests | $CSHARP_RESULT |" >> "$GITHUB_STEP_SUMMARY"

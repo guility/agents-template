@@ -13,14 +13,14 @@ jobs:
       run:
         working-directory: src/templates/csharp
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Fetch C# template
         working-directory: .
         run: bash scripts/setup/fetch_language_templates.sh csharp
       
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: '10.0.404'
       
@@ -37,7 +37,7 @@ jobs:
         run: bash "$GITHUB_WORKSPACE/scripts/common/run-tests.sh"
 
       - name: Upload coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: coverage-csharp
           path: test-results/csharp/**/coverage.cobertura.xml
