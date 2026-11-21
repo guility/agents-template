@@ -6,8 +6,6 @@ on:
 jobs:
   fast-checks:
     runs-on: ubuntu-latest
-    env:
-      CARGO_TARGET_DIR: ${{ runner.temp }}/cargo-target
     steps:
       - uses: actions/checkout@v4
         with:
