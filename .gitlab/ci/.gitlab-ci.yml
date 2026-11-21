@@ -1,21 +1,35 @@
 variables:
   CI_PLATFORM: gitlab
-  DOCKER_TLS_CERTDIR: "/certs"
-  DOCKER_HOST: "tcp://docker:2376"
-  DOCKER_TLS_VERIFY: "1"
-  DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+  GIT_DEPTH: "0"
+  GITLEAKS_VERSION: "8.30.1"
+  LIZARD_VERSION: "1.25.0"
+  UV_VERSION: "0.13.9"
+  TRIVY_VERSION: "0.73.0"
 
 stages:
+  - .pre
   - sast
   - build
   - security
   - tests
+  - post_merge
   - push
   - fetch_secrets
   - deploy
+  - publish_metrics
+  - .post
 
 include:
+  - local: "/.gitlab/ci/fast-checks.yml"
+  - local: "/.gitlab/ci/fast-python.yml"
+  - local: "/.gitlab/ci/fast-nodejs.yml"
+  - local: "/.gitlab/ci/fast-rust.yml"
+  - local: "/.gitlab/ci/fast-go.yml"
   - local: "/.gitlab/ci/sast.yml"
+  - local: "/.gitlab/ci/slow-checks.yml"
   - local: "/.gitlab/ci/images.yml"
   - local: "/.gitlab/ci/tests.yml"
+  - local: "/.gitlab/ci/post-merge-tests.yml"
+  - local: "/.gitlab/ci/mutation-tests.yml"
   - local: "/.gitlab/ci/deploy.yml"
+  - local: "/.gitlab/ci/summary.yml"

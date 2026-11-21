@@ -29,6 +29,7 @@ run_requested_suite() {
             fi
             if [ "$has_csharp" = true ]; then
                 run_csharp_tests || exit_code=1
+                run_csharp_mutation_tests || exit_code=1
             fi
             ;;
         unit)
@@ -62,6 +63,10 @@ run_requested_suite() {
             fi
             if [ "$has_go" = true ]; then
                 run_go_mutation_tests || exit_code=1
+                runner_count=$((runner_count + 1))
+            fi
+            if [ "$has_csharp" = true ]; then
+                run_csharp_mutation_tests || exit_code=1
                 runner_count=$((runner_count + 1))
             fi
             [ "$runner_count" -gt 0 ] || { log_error "No mutation test runner is configured"; return 1; }

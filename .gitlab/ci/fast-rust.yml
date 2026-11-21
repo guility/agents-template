@@ -1,0 +1,19 @@
+fast-rust-checks:
+  stage: .pre
+  needs: [branch-name-validation]
+  image: rust:1.100.0-slim
+  variables:
+    GIT_DEPTH: "0"
+    CARGO_HOME: "$CI_PROJECT_DIR/.cargo"
+    CARGO_TARGET_DIR: "$CI_PROJECT_DIR/.cargo-target"
+  cache:
+    key: fast-rust-${CI_COMMIT_REF_SLUG}-1.100.0
+    paths: [.cargo/registry/, .cargo/git/db/, .cargo-target/]
+  before_script:
+    - apt-get update && apt-get install -y --no-install-recommends bash git pkg-config libssl-dev
+    - rustup component add clippy rustfmt --toolchain 1.100.0
+  script:
+    - RUSTUP_TOOLCHAIN=1.100.0 bash scripts/ci/checks/fast-push-checks.sh "$CI_COMMIT_REF_NAME" "${CI_MERGE_REQUEST_DIFF_BASE_SHA:-$CI_COMMIT_BEFORE_SHA}" "$CI_COMMIT_SHA" rust
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" || $CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes: ['**/*.rs', '**/Cargo.toml', '**/Cargo.lock', '**/rust-toolchain.toml']

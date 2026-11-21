@@ -1,0 +1,76 @@
+name: Source quality gates
+
+on:
+  workflow_call:
+
+jobs:
+  sast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Semgrep SAST
+        run: |
+          bash scripts/setup/fetch_language_templates.sh all
+          docker run --rm -v "$PWD:/src" semgrep/semgrep:1.99.0 scan --config auto --error --metrics off /src
+
+  quality-metrics:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.14.8'
+      - name: Install pinned uv
+        env:
+          UV_INSTALL_DIR: ${{ runner.temp }}/uv-bin
+          UV_VERSION: 0.13.9
+        run: |
+          bash scripts/ci/checks/install-uv.sh
+          echo "$UV_INSTALL_DIR" >> "$GITHUB_PATH"
+      - name: Install tools, templates and scan secrets
+        env:
+          GITLEAKS_INSTALL_DIR: ${{ runner.temp }}/quality-bin
+        run: |
+          uv sync --project scripts/ci/quality-tools --locked --no-dev
+          bash scripts/setup/fetch_language_templates.sh all
+          bash scripts/ci/checks/install-gitleaks.sh
+          "$GITLEAKS_INSTALL_DIR/gitleaks" dir --redact --no-banner src/templates
+      - name: Measure complexity and run Dryer
+        run: |
+          uv run --project scripts/ci/quality-tools --no-sync python scripts/testing/quality_metrics.py --component common scripts
+          for language in python nodejs rust go csharp; do
+            uv run --project scripts/ci/quality-tools --no-sync python scripts/testing/quality_metrics.py --component "$language" "src/templates/$language/src"
+          done
+          bash scripts/ci/quality-tools/run-dryer.sh src/templates/python src/templates/nodejs src/templates/rust src/templates/go
+          python scripts/ci/quality-tools/metrics/render_quality_matrix.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: quality-metrics
+          path: docs/quality
+          if-no-files-found: error
+
+  slow-language-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.14.8'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.17.1'
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.2'
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.404'
+      - name: Install Rust and language templates
+        run: |
+          rustup toolchain install 1.100.0 --profile minimal --component clippy,rustfmt
+          bash scripts/setup/fetch_language_templates.sh all
+      - name: Check Python, Node.js, Rust, Go and C#
+        env:
+          UV_INSTALL_DIR: ${{ runner.temp }}/uv-bin
+          UV_VERSION: 0.13.9
+        run: bash scripts/ci/checks/slow-language-checks.sh

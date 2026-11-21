@@ -1,0 +1,26 @@
+name: Publish production images
+
+on:
+  workflow_call:
+
+jobs:
+  push-images:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: built-images
+          path: artifacts/images
+      - name: Push tested production images to GHCR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/images/push-images-github.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: registry-image-refs
+          path: artifacts/registry-image-refs.txt
+          if-no-files-found: error

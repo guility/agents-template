@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+root="$(git rev-parse --show-toplevel)"
+export PATH="${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH"
+if command -v go >/dev/null; then export PATH="$(go env GOPATH)/bin:$PATH"; fi
+remote_name="${1:-origin}"
+remote_url="$(git remote get-url "$remote_name" 2>/dev/null || true)"
+allow_language=0
+[[ "$remote_url" == *agents-template-langs* ]] && allow_language=1
+refs=()
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [[ -n "${local_ref:-}" ]] || continue
+  [[ "$local_ref" == refs/heads/* ]] || continue
+  refs+=("${local_ref#refs/heads/}|$remote_sha|$local_sha")
+done
+
+for item in "${refs[@]}"; do
+  IFS='|' read -r branch _ _ <<< "$item"
+  ALLOW_LANGUAGE_BRANCHES="$allow_language" bash "$root/scripts/common/validate-branch.sh" "$branch"
+done
+for item in "${refs[@]}"; do
+  IFS='|' read -r branch base head <<< "$item"
+  if [[ -z "$base" || "$base" =~ ^0+$ ]]; then
+    remote_main="refs/remotes/$remote_name/main"
+    if ! git show-ref --verify --quiet "$remote_main"; then
+      git fetch --quiet "$remote_name" main || {
+        echo "Cannot fetch $remote_name/main to check a new branch." >&2
+        exit 2
+      }
+    fi
+    base="$(bash "$root/scripts/common/git/resolve-diff-base.sh" "$head" "$base" "$remote_name")"
+  fi
+  if git diff --name-only "$base" "$head" | grep -Eq '\.rs$|(^|/)(Cargo\.toml|Cargo\.lock|rust-toolchain\.toml)$'; then
+    export RUSTUP_TOOLCHAIN=1.100.0
+  fi
+  for tool in gitleaks lizard; do
+    command -v "$tool" >/dev/null || {
+      echo "$tool is required by pre-push; install pinned tools with scripts/setup/bootstrap_global_tools.sh" >&2
+      exit 127
+    }
+  done
+  ALLOW_LANGUAGE_BRANCHES="$allow_language" bash "$root/scripts/ci/checks/fast-push-checks.sh" "$branch" "$base" "$head"
+done

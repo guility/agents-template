@@ -1,0 +1,69 @@
+name: Image and unit gates
+
+on:
+  workflow_call:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build production, then tests targets
+        run: bash scripts/ci/images/build-targets.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: built-images
+          path: artifacts/images
+          if-no-files-found: error
+
+  image-security:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: built-images
+          path: artifacts/images
+      - name: Install pinned Trivy
+        env:
+          TRIVY_INSTALL_DIR: ${{ runner.temp }}/trivy-bin
+        run: |
+          bash scripts/ci/checks/install-trivy.sh
+          echo "$TRIVY_INSTALL_DIR" >> "$GITHUB_PATH"
+      - name: Scan built images and locked dependencies
+        run: |
+          bash scripts/ci/images/scan-images.sh
+          bash scripts/ci/images/scan-dependencies.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dependency-metrics
+          path: artifacts/reports/dependencies
+          if-no-files-found: error
+
+  unit:
+    needs: image-security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.14.8'
+      - name: Install pinned uv
+        env:
+          UV_INSTALL_DIR: ${{ runner.temp }}/uv-bin
+          UV_VERSION: 0.13.9
+        run: |
+          bash scripts/ci/checks/install-uv.sh
+          echo "$UV_INSTALL_DIR" >> "$GITHUB_PATH"
+      - uses: actions/download-artifact@v4
+        with:
+          name: built-images
+          path: artifacts/images
+      - name: Run unit suite from built tests image ID
+        run: bash scripts/ci/images/run-unit-from-image.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: image-coverage
+          path: artifacts/reports/coverage-image
+          if-no-files-found: error

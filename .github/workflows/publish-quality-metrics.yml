@@ -1,0 +1,56 @@
+name: Publish successful main metrics
+
+on:
+  workflow_call:
+
+jobs:
+  publish:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: quality-metrics
+          path: docs/quality
+      - uses: actions/download-artifact@v4
+        with:
+          name: dependency-metrics
+          path: artifacts/reports/dependencies
+      - uses: actions/download-artifact@v4
+        with:
+          name: mutator-results
+          path: artifacts/reports/mutation
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage-python
+          path: artifacts/reports/coverage/python
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage-nodejs
+          path: artifacts/reports/coverage/nodejs
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage-rust
+          path: artifacts/reports/coverage/rust
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage-go
+          path: artifacts/reports/coverage/go
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage-csharp
+          path: artifacts/reports/coverage/csharp
+      - name: Merge successful pipeline measurements
+        run: |
+          python scripts/ci/quality-tools/merge_pipeline_metrics.py --sast-result success --fast-result success --lint-result success --secrets-result success
+          python scripts/ci/quality-tools/metrics/render_quality_matrix.py
+          python scripts/ci/quality-tools/metrics/write_badge_endpoints.py
+      - name: Publish metrics to the protected-main badge branch
+        env:
+          QUALITY_METRICS_GIT_NAME: github-actions[bot]
+          QUALITY_METRICS_GIT_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+        run: bash scripts/ci/quality-tools/publish-metrics-branch.sh

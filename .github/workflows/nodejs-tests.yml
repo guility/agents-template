@@ -14,7 +14,7 @@ jobs:
         working-directory: src/templates/nodejs
     strategy:
       matrix:
-        node-version: ['18', '20', '22']
+        node-version: ['22.17.1']
     steps:
       - uses: actions/checkout@v4
 
@@ -27,8 +27,8 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       
-      - name: Install pnpm
-        run: npm install -g pnpm
+      - name: Enable pinned pnpm
+        run: corepack enable
       
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -37,8 +37,8 @@ jobs:
         run: bash "$GITHUB_WORKSPACE/scripts/common/run-tests.sh"
       
       - name: Upload coverage
-        uses: codecov/codecov-action@v4
+        uses: actions/upload-artifact@v4
         with:
-          files: ./test-results/coverage.xml
-          flags: nodejs
-
+          name: coverage-nodejs
+          path: coverage/lcov.info
+          if-no-files-found: warn

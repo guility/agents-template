@@ -19,17 +19,27 @@ jobs:
         working-directory: .
         run: bash scripts/setup/fetch_language_templates.sh rust
       
-      - name: Install Rust
-        uses: dtolnay/rust-action@stable
+      - name: Install pinned Rust toolchain
+        run: |
+          rustup toolchain install 1.100.0 --profile minimal --component clippy,rustfmt,llvm-tools-preview
+          cargo +1.100.0 install cargo-llvm-cov --version 0.9.1 --locked
       
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
       
-      - name: Run tests
-        run: cargo test --all-features
-      
-      - name: Run mutation tests
+      - name: Install native mutation tool
         run: |
-          cargo install cargo-mutants || true
+          rustup toolchain install 1.88.0 --profile minimal
+          cargo +1.88.0 install cargo-mutants --version 27.1.0 --locked
+      - name: Run unit and native mutation suites
+        run: |
+          export RUSTUP_TOOLCHAIN=1.100.0
           bash "$GITHUB_WORKSPACE/scripts/common/run-tests.sh"
+
+      - name: Upload coverage when available
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-rust
+          path: docs/coverage/rust/**
+          if-no-files-found: warn
 

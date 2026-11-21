@@ -14,12 +14,13 @@ run_python_unit_tests() {
         return 1
     fi
 
-    # Запуск с покрытием
-    cd "$test_dir" || return 1
+    # Run from the project root so coverage paths resolve to production source.
+    cd "$ROOT_DIR" || return 1
 
     local coverage_file=".coverage.unit"
 
-    if pytest --cov=src --cov-report=term-missing --cov-report=html:"$ROOT_DIR/docs/coverage/unit" \
+    if pytest tests/unit --cov=src --cov-report=term-missing --cov-report=html:"$ROOT_DIR/docs/coverage/unit" \
+              --cov-report=xml:"$ROOT_DIR/test-results/coverage.xml" \
               --cov-fail-under="$COVERAGE_TARGET" \
               --junitxml="$ROOT_DIR/test-results/unit-python.xml" \
               -v 2>&1 | tee "$ROOT_DIR/test-results/unit-python.log"; then
@@ -46,9 +47,9 @@ run_python_integration_tests() {
         return 1
     fi
 
-    cd "$test_dir" || return 1
+    cd "$ROOT_DIR" || return 1
 
-    if pytest --cov=src --cov-report=term-missing --cov-report=html:"$ROOT_DIR/docs/coverage/integration" \
+    if pytest tests/integration --cov=infrastructure --cov-report=term-missing --cov-report=html:"$ROOT_DIR/docs/coverage/integration" \
               --cov-fail-under="$COVERAGE_TARGET" \
               --junitxml="$ROOT_DIR/test-results/integration-python.xml" \
               -v 2>&1 | tee "$ROOT_DIR/test-results/integration-python.log"; then
@@ -75,9 +76,9 @@ run_python_e2e_tests() {
         return 1
     fi
 
-    cd "$test_dir" || return 1
+    cd "$ROOT_DIR" || return 1
 
-    if pytest --cov=src --cov-report=term-missing \
+    if pytest tests/e2e --cov=domain --cov=infrastructure --cov=interface --cov-report=term-missing \
               --cov-fail-under="$COVERAGE_TARGET" \
               --junitxml="$ROOT_DIR/test-results/e2e-python.xml" \
               -v 2>&1 | tee "$ROOT_DIR/test-results/e2e-python.log"; then

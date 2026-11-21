@@ -11,7 +11,13 @@ run_go_tests() {
     cd "$ROOT_DIR" || return 1
 
     # Запуск тестов с покрытием
-    if go test ./... -v -coverprofile="$ROOT_DIR/test-results/go-coverage.out" 2>&1 | tee "$ROOT_DIR/test-results/go-tests.log"; then
+    if go test ./... -v -coverpkg=./... -coverprofile="$ROOT_DIR/test-results/go-coverage.out" 2>&1 | tee "$ROOT_DIR/test-results/go-tests.log"; then
+        local coverage
+        coverage=$(go tool cover -func="$ROOT_DIR/test-results/go-coverage.out" | awk '/^total:/ {print $3}')
+        if [ "$coverage" != "100.0%" ]; then
+            log_error "Go statement coverage is ${coverage:-missing}; 100% is required"
+            return 1
+        fi
         log_info "Go tests passed"
 
         # Генерация HTML отчета
@@ -22,7 +28,7 @@ run_go_tests() {
     fi
 }
 
-# Мутационное тестирование для Go (ginkgo/gomega или go-mutesting)
+# Мутационное тестирование для Go (Gremlins)
 run_go_mutation_tests() {
     log_step "Running Go mutation testing..."
 
@@ -32,16 +38,19 @@ run_go_mutation_tests() {
         return 0
     fi
 
-    if command -v go-mutesting &> /dev/null; then
+    if command -v gremlins &> /dev/null; then
         cd "$ROOT_DIR" || return 1
 
-        if go-mutesting github.com/$(basename "$ROOT_DIR")/... 2>&1 | tee "$ROOT_DIR/test-results/mutation-go.log"; then
+        if gremlins unleash --integration --coverpkg=./... \
+            --threshold-efficacy 100 --threshold-mcover 100 \
+            2>&1 | tee "$ROOT_DIR/test-results/mutation-go.log"; then
             log_info "Go mutation testing completed"
         else
-            log_warn "Go mutation testing found issues"
+            log_error "Go mutation testing found surviving mutants or failed to complete"
+            return 1
         fi
     else
-        log_error "go-mutesting not found; cannot run Go mutation testing"
+        log_error "Gremlins not found; cannot run Go mutation testing"
         return 1
     fi
 }
