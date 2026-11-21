@@ -17,6 +17,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: '3.14.8'
+      - name: Install pinned uv
+        env:
+          UV_INSTALL_DIR: ${{ runner.temp }}/uv-bin
+          UV_VERSION: 0.13.9
+        run: |
+          bash scripts/ci/checks/install-uv.sh
+          echo "$UV_INSTALL_DIR" >> "$GITHUB_PATH"
+      - name: Install locked report dependencies
+        run: uv sync --project scripts/ci/quality-tools --locked --no-dev
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         if: inputs.quality_result == 'success'
         continue-on-error: true

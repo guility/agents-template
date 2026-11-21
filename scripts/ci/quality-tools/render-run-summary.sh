@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-python scripts/ci/quality-tools/merge_pipeline_metrics.py \
+uv run --project scripts/ci/quality-tools --no-sync python scripts/ci/quality-tools/merge_pipeline_metrics.py \
   --sast-result "$QUALITY_RESULT" \
   --fast-result "$FAST_RESULT" \
   --lint-result "$QUALITY_RESULT" \
   --secrets-result "$FAST_RESULT"
-python scripts/ci/quality-tools/metrics/render_quality_matrix.py
+uv run --project scripts/ci/quality-tools --no-sync python scripts/ci/quality-tools/metrics/render_quality_matrix.py
 {
   echo '## Pipeline checks'
   echo '| Gate | Result |'
