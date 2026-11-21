@@ -11,7 +11,7 @@ jobs:
       - name: Run Semgrep SAST
         run: |
           bash scripts/setup/fetch_language_templates.sh all
-          docker run --rm -v "$PWD:/src" --entrypoint semgrep semgrep/semgrep:1.99.0 scan --config auto --error --metrics off /src
+          docker run --rm -v "$PWD:/src" --entrypoint semgrep semgrep/semgrep:1.99.0 scan --config p/default --error --metrics off /src
 
   quality-metrics:
     runs-on: ubuntu-latest
