@@ -27,11 +27,7 @@ class ProtectedPublicationTests(unittest.TestCase):
         self.assertIn("'push-prebuild-gates'", workflow)
         self.assertIn("'push-image-gate'", workflow)
         self.assertNotIn("required-gate-checks", workflow)
-        protected_gate_condition = (
-            "github.event_name == 'pull_request' || "
-            "(github.ref == 'refs/heads/main' && github.ref_protected)"
-        )
-        self.assertEqual(workflow.count(protected_gate_condition), 3)
+        self.assertEqual(workflow.count("GATE_REQUIRED: ${{ github.event_name"), 2)
 
     def test_github_deploy_uses_digest_from_successful_main_run(self) -> None:
         workflow = (ROOT / ".github/workflows/deploy-production.yml").read_text()

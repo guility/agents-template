@@ -48,7 +48,7 @@ jobs:
         run: bash scripts/ci/checks/status/assert-gate-result.sh "$GATE_NAME" "$GATE_RESULT"
 
   prebuild-gate-status:
-    if: always() && (github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && github.ref_protected))
+    if: always()
     needs: [branch-gate, run-fast-checks, run-prebuild-gates]
     runs-on: ubuntu-latest
     name: ${{ github.event_name == 'pull_request' && 'prebuild-gates' || (github.ref == 'refs/heads/main' && github.ref_protected && 'post-merge-prebuild-gates') || 'push-prebuild-gates' }}
@@ -57,10 +57,11 @@ jobs:
       - env:
           GATE_NAME: prebuild-gates
           GATE_RESULT: ${{ needs.run-prebuild-gates.result }}
-        run: bash scripts/ci/checks/status/assert-gate-result.sh "$GATE_NAME" "$GATE_RESULT"
+          GATE_REQUIRED: ${{ github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && github.ref_protected) }}
+        run: bash scripts/ci/checks/status/assert-gate-result.sh "$GATE_NAME" "$GATE_RESULT" "$GATE_REQUIRED"
 
   image-gate-status:
-    if: always() && (github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && github.ref_protected))
+    if: always()
     needs: [branch-gate, run-fast-checks, run-prebuild-gates, run-image-gate]
     runs-on: ubuntu-latest
     name: ${{ github.event_name == 'pull_request' && 'image-gate' || (github.ref == 'refs/heads/main' && github.ref_protected && 'post-merge-image-gate') || 'push-image-gate' }}
@@ -69,7 +70,8 @@ jobs:
       - env:
           GATE_NAME: image-gate
           GATE_RESULT: ${{ needs.run-image-gate.result }}
-        run: bash scripts/ci/checks/status/assert-gate-result.sh "$GATE_NAME" "$GATE_RESULT"
+          GATE_REQUIRED: ${{ github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && github.ref_protected) }}
+        run: bash scripts/ci/checks/status/assert-gate-result.sh "$GATE_NAME" "$GATE_RESULT" "$GATE_REQUIRED"
 
   language-suites:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push' && github.ref_protected

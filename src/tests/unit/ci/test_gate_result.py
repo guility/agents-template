@@ -11,7 +11,7 @@ SCRIPT = (
 class GateResultTests(unittest.TestCase):
     def run_gate(self, result):
         return subprocess.run(
-            ["bash", str(SCRIPT), "test-gate", result],
+            ["bash", str(SCRIPT), "test-gate", result, "true"],
             check=False,
             capture_output=True,
             text=True,
@@ -20,10 +20,19 @@ class GateResultTests(unittest.TestCase):
     def test_success_always_passes(self):
         self.assertEqual(self.run_gate("success").returncode, 0)
 
+    def test_expected_skip_passes_on_push(self):
+        result = subprocess.run(
+            ["bash", str(SCRIPT), "test-gate", "skipped", "false"],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0)
+
     def test_skipped_required_gate_fails(self):
         result = self.run_gate("skipped")
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("Required gate", result.stderr)
+        self.assertIn("required=true", result.stderr)
 
     def test_failure_fails(self):
         result = self.run_gate("failure")
