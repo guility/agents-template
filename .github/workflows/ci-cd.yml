@@ -12,6 +12,7 @@ permissions:
 
 jobs:
   branch-gate:
+    name: ${{ github.event_name == 'pull_request' && 'branch-gate' || (github.ref == 'refs/heads/main' && github.ref_protected && 'post-merge-branch-gate') || 'push-branch-gate' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -34,35 +35,45 @@ jobs:
     needs: run-prebuild-gates
     uses: ./.github/workflows/image-gate.yml
 
-  required-gate-checks:
+  fast-check-status:
     if: always()
-    needs: [branch-gate, run-fast-checks, run-prebuild-gates, run-image-gate]
+    needs: [branch-gate, run-fast-checks]
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - gate: fast-checks
-            result: ${{ needs.run-fast-checks.result }}
-            required: true
-          - gate: prebuild-gates
-            result: ${{ needs.run-prebuild-gates.result }}
-            required: ${{ github.event_name == 'pull_request' || github.ref == 'refs/heads/main' }}
-          - gate: image-gate
-            result: ${{ needs.run-image-gate.result }}
-            required: ${{ github.event_name == 'pull_request' || github.ref == 'refs/heads/main' }}
-    name: ${{ matrix.gate }}
+    name: ${{ github.event_name == 'pull_request' && 'fast-checks' || (github.ref == 'refs/heads/main' && github.ref_protected && 'post-merge-fast-checks') || 'fast-push-checks' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - env:
-          GATE_NAME: ${{ matrix.gate }}
-          GATE_RESULT: ${{ matrix.result }}
-          GATE_REQUIRED: ${{ matrix.required }}
-        run: bash scripts/ci/checks/status/assert-gate-result.sh "$GATE_NAME" "$GATE_RESULT" "$GATE_REQUIRED"
+          GATE_NAME: fast-checks
+          GATE_RESULT: ${{ needs.run-fast-checks.result }}
+        run: bash scripts/ci/checks/status/assert-gate-result.sh "$GATE_NAME" "$GATE_RESULT"
+
+  prebuild-gate-status:
+    if: always() && (github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && github.ref_protected))
+    needs: [branch-gate, run-fast-checks, run-prebuild-gates]
+    runs-on: ubuntu-latest
+    name: ${{ github.event_name == 'pull_request' && 'prebuild-gates' || (github.ref == 'refs/heads/main' && github.ref_protected && 'post-merge-prebuild-gates') || 'push-prebuild-gates' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - env:
+          GATE_NAME: prebuild-gates
+          GATE_RESULT: ${{ needs.run-prebuild-gates.result }}
+        run: bash scripts/ci/checks/status/assert-gate-result.sh "$GATE_NAME" "$GATE_RESULT"
+
+  image-gate-status:
+    if: always() && (github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && github.ref_protected))
+    needs: [branch-gate, run-fast-checks, run-prebuild-gates, run-image-gate]
+    runs-on: ubuntu-latest
+    name: ${{ github.event_name == 'pull_request' && 'image-gate' || (github.ref == 'refs/heads/main' && github.ref_protected && 'post-merge-image-gate') || 'push-image-gate' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - env:
+          GATE_NAME: image-gate
+          GATE_RESULT: ${{ needs.run-image-gate.result }}
+        run: bash scripts/ci/checks/status/assert-gate-result.sh "$GATE_NAME" "$GATE_RESULT"
 
   language-suites:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push' && github.ref_protected
-    needs: [run-image-gate, required-gate-checks]
+    needs: [run-image-gate, fast-check-status, prebuild-gate-status, image-gate-status]
     uses: ./.github/workflows/language-tests.yml
     with:
       suite: post-merge
@@ -79,7 +90,7 @@ jobs:
 
   push-images:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push' && github.ref_protected
-    needs: [run-image-gate, required-gate-checks, language-suites, mutator]
+    needs: [run-image-gate, fast-check-status, prebuild-gate-status, image-gate-status, language-suites, mutator]
     permissions:
       contents: read
       packages: write
@@ -92,7 +103,9 @@ jobs:
       - run-fast-checks
       - run-prebuild-gates
       - run-image-gate
-      - required-gate-checks
+      - fast-check-status
+      - prebuild-gate-status
+      - image-gate-status
       - language-suites
       - mutator
       - push-images
@@ -110,7 +123,7 @@ jobs:
 
   publish-quality-metrics:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.ref_protected
-    needs: [branch-gate, run-fast-checks, run-prebuild-gates, run-image-gate, required-gate-checks, language-suites, mutator, push-images]
+    needs: [branch-gate, run-fast-checks, run-prebuild-gates, run-image-gate, fast-check-status, prebuild-gate-status, image-gate-status, language-suites, mutator, push-images]
     permissions:
       contents: write
     uses: ./.github/workflows/publish-quality-metrics.yml

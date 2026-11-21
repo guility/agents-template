@@ -13,12 +13,47 @@ class ProtectedPublicationTests(unittest.TestCase):
             workflow,
         )
         self.assertIn(
-            "needs: [run-image-gate, required-gate-checks, language-suites, mutator]",
+            "needs: [run-image-gate, fast-check-status, prebuild-gate-status, "
+            "image-gate-status, language-suites, mutator]",
             workflow,
         )
+        self.assertIn("&& 'branch-gate'", workflow)
+        self.assertIn("'push-branch-gate'", workflow)
+        self.assertIn("'post-merge-branch-gate'", workflow)
         for gate in ("fast-checks", "prebuild-gates", "image-gate"):
             with self.subTest(gate=gate):
-                self.assertIn(f"gate: {gate}", workflow)
+                self.assertIn(f"&& '{gate}'", workflow)
+        self.assertIn("'fast-push-checks'", workflow)
+        self.assertIn("'push-prebuild-gates'", workflow)
+        self.assertIn("'push-image-gate'", workflow)
+        self.assertNotIn("required-gate-checks", workflow)
+        protected_gate_condition = (
+            "github.event_name == 'pull_request' || "
+            "(github.ref == 'refs/heads/main' && github.ref_protected)"
+        )
+        self.assertEqual(workflow.count(protected_gate_condition), 3)
+
+    def test_github_deploy_uses_digest_from_successful_main_run(self) -> None:
+        workflow = (ROOT / ".github/workflows/deploy-production.yml").read_text()
+        source_check = (ROOT / "scripts/ci/deploy/validate-source-run.sh").read_text()
+        deploy_script = (ROOT / "scripts/ci/deploy/deploy-images.sh").read_text()
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertIn(
+            "if: github.ref == 'refs/heads/main' && github.ref_protected", workflow
+        )
+        self.assertIn("name: registry-image-refs", workflow)
+        self.assertIn("validate-source-run.sh", workflow)
+        self.assertIn("packages: read", workflow)
+        self.assertIn("docker login ghcr.io", workflow)
+        for requirement in (
+            '.path == ".github/workflows/ci-cd.yml"',
+            '.head_branch == "main"',
+            '.event == "push"',
+            '.conclusion == "success"',
+        ):
+            with self.subTest(requirement=requirement):
+                self.assertIn(requirement, source_check)
+        self.assertIn("@sha256:", deploy_script)
 
     def test_metrics_publication_is_limited_to_protected_main(self) -> None:
         workflow = (ROOT / ".github/workflows/ci-cd.yml").read_text()
