@@ -13,7 +13,7 @@ post-merge-python-tests:
 
 post-merge-nodejs-tests:
   stage: post_merge
-  image: node:22.17.1-bookworm-slim
+  image: node:22.23.5-bookworm-slim
   before_script:
     - apt-get update && apt-get install -y --no-install-recommends bash ca-certificates git
     - corepack enable

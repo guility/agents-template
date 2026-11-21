@@ -1,10 +1,10 @@
 fast-node-checks:
   stage: .pre
   needs: [branch-name-validation]
-  image: node:22.17.1-bookworm-slim
+  image: node:22.23.5-bookworm-slim
   variables: { GIT_DEPTH: "0", NPM_CONFIG_CACHE: "$CI_PROJECT_DIR/.npm" }
   cache:
-    key: fast-npm-${CI_COMMIT_REF_SLUG}-node22.17.1
+    key: fast-npm-${CI_COMMIT_REF_SLUG}-node22.23.5
     paths: [.npm/]
   before_script:
     - apt-get update && apt-get install -y --no-install-recommends bash git

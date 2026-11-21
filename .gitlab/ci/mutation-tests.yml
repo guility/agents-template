@@ -24,7 +24,7 @@ mutator-python:
 mutator-nodejs:
   extends: .mutator-template
   needs: [{ job: post-merge-nodejs-tests, artifacts: false }]
-  image: node:22.17.1-bookworm
+  image: node:22.23.5-bookworm
   variables: { MUTATION_LANGUAGE: nodejs }
 
 mutator-rust:
