@@ -11,6 +11,8 @@
 - Block force pushes and branch deletion.
 - Leave bypass actors empty so administrators and CI actors cannot push commits directly to `main`.
 - Permit GitHub Actions to update only `feature/quality-metrics`; its publisher job runs only after every protected-main quality gate succeeds.
+- Require `branch-gate`, `fast-checks`, `prebuild-gates`, and `image-gate` on pull requests. Incremental push and post-merge status contexts use distinct names, so skipped MR gates on branch pushes cannot satisfy those requirements.
+- The only manual workflow is `Deploy production`. Run it from protected `main`, select a successful protected-main `Quality pipeline` run ID, and configure the `production` environment with at least one required reviewer and a protected `DEPLOY_COMMAND` secret.
 
 Fork pull requests use the `pull_request` event and the workflow's read-only `contents` and `pull-requests` token permissions. Do not pass repository secrets into these workflows.
 
