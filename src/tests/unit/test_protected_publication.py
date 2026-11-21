@@ -24,7 +24,11 @@ class ProtectedPublicationTests(unittest.TestCase):
 
     def test_gitlab_publish_and_deploy_require_protected_default_branch(self) -> None:
         condition = '$CI_COMMIT_REF_PROTECTED == "true"'
-        for file in (".gitlab/ci/images.yml", ".gitlab/ci/summary.yml", ".gitlab/ci/deploy.yml"):
+        for file in (
+            ".gitlab/ci/images.yml",
+            ".gitlab/ci/summary.yml",
+            ".gitlab/ci/deploy.yml",
+        ):
             with self.subTest(file=file):
                 self.assertIn(condition, (ROOT / file).read_text())
 

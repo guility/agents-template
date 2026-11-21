@@ -66,9 +66,7 @@ class BranchValidationTests(unittest.TestCase):
             with self.subTest(branch=branch):
                 self.assertEqual(validate(branch, LANGUAGE_REMOTE), 0)
                 self.assertEqual(validate(branch, COMMON_REMOTE), 2)
-                self.assertEqual(
-                    validate(branch, COMMON_REMOTE, allow_override="1"), 2
-                )
+                self.assertEqual(validate(branch, COMMON_REMOTE, allow_override="1"), 2)
 
     def test_ci_project_identity_limits_language_exception(self) -> None:
         for branch in LANGUAGE_BRANCHES:
