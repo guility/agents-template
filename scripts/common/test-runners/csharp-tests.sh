@@ -28,7 +28,9 @@ run_csharp_tests() {
     # Запуск тестов с покрытием
     local coverage_dir="$ROOT_DIR/test-results/csharp/run-$(date +%s)-$$"
     mkdir -p "$coverage_dir"
-    if dotnet test "$project_file" --no-restore --collect:"XPlat Code Coverage" --results-directory "$coverage_dir" 2>&1 | tee "$ROOT_DIR/test-results/csharp-tests.log"; then
+    if dotnet test "$project_file" --no-restore --filter "Category=Unit" \
+        --collect:"XPlat Code Coverage" --results-directory "$coverage_dir" \
+        2>&1 | tee "$ROOT_DIR/test-results/csharp-tests.log"; then
         local coverage_file rates line_rate branch_rate
         coverage_file=$(find "$coverage_dir" -name coverage.cobertura.xml -print -quit)
         if [ -z "$coverage_file" ]; then
@@ -46,6 +48,31 @@ run_csharp_tests() {
         log_error "C# tests failed"
         return 1
     fi
+}
+
+run_csharp_integration_tests() {
+    run_csharp_category_tests Integration
+}
+
+run_csharp_e2e_tests() {
+    run_csharp_category_tests E2E
+}
+
+run_csharp_category_tests() {
+    local category="$1"
+    local suite
+    suite="$(printf '%s' "$category" | tr '[:upper:]' '[:lower:]')"
+    local test_dir="$ROOT_DIR/tests/$suite"
+    local project_file
+    if [ ! -d "$test_dir" ] || ! find "$test_dir" -type f -print -quit | grep -q .; then
+        log_error "C# $suite test suite is missing or empty"
+        return 1
+    fi
+    project_file=$(find "$ROOT_DIR" -name "*.Tests.csproj" -print -quit)
+    [ -n "$project_file" ] || { log_error "C# test project not found"; return 1; }
+    cd "$(dirname "$project_file")" || return 1
+    dotnet test "$project_file" --no-restore --filter "Category=$category" \
+        2>&1 | tee "$ROOT_DIR/test-results/${suite}-csharp.log"
 }
 
 run_csharp_mutation_tests() {

@@ -50,7 +50,11 @@ def go_metrics(path):
             count, hits = map(int, match.groups())
             total += count
             covered += count if hits else 0
-    return {"line_coverage": percentage(covered, total), "branch_coverage": "n/a"}
+    return {
+        "statement_coverage": percentage(covered, total),
+        "line_coverage": "n/a",
+        "branch_coverage": "n/a",
+    }
 
 
 def coverage_metrics(directory):

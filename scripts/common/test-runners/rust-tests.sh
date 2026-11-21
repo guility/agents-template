@@ -2,6 +2,7 @@ run_rust_tests() {
     log_step "Running Rust tests..."
 
     local cargo_toml="$ROOT_DIR/Cargo.toml"
+    local suite="${1:-unit}"
 
     if [ ! -f "$cargo_toml" ]; then
         log_error "Cargo.toml not found; cannot run Rust tests"
@@ -10,8 +11,7 @@ run_rust_tests() {
 
     cd "$ROOT_DIR" || return 1
 
-    # Unit и integration тесты
-    if cargo test --all-features 2>&1 | tee "$ROOT_DIR/test-results/rust-tests.log"; then
+    if cargo test --all-features --test "$suite" 2>&1 | tee "$ROOT_DIR/test-results/rust-$suite.log"; then
         log_info "Rust tests passed"
     else
         log_error "Rust tests failed"
@@ -24,13 +24,33 @@ run_rust_tests() {
     fi
     rustup component add llvm-tools-preview --toolchain "${RUSTUP_TOOLCHAIN:-stable}" || return 1
     mkdir -p "$ROOT_DIR/docs/coverage/rust"
-    if ! cargo llvm-cov --locked --all-features --lcov \
+    if ! cargo llvm-cov --test "$suite" --locked --all-features --lcov \
         --output-path "$ROOT_DIR/docs/coverage/rust/lcov.info" \
         --fail-under-lines 100 2>&1 | tee "$ROOT_DIR/test-results/rust-coverage.log"; then
         log_error "Rust line coverage is below 100% or coverage generation failed"
         return 1
     fi
     log_info "Rust line coverage gate passed"
+}
+
+run_rust_integration_tests() {
+    run_rust_secondary_suite integration
+}
+
+run_rust_e2e_tests() {
+    run_rust_secondary_suite e2e
+}
+
+run_rust_secondary_suite() {
+    local suite="$1"
+    local test_file="$ROOT_DIR/tests/$suite.rs"
+    if [ ! -s "$test_file" ]; then
+        log_error "Rust $suite test suite is missing or empty"
+        return 1
+    fi
+    cd "$ROOT_DIR" || return 1
+    cargo test --all-features --test "$suite" \
+        2>&1 | tee "$ROOT_DIR/test-results/rust-$suite.log"
 }
 
 # Мутационное тестирование для Rust (cargo-mutants)
