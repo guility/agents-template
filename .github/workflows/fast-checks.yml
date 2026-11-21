@@ -31,12 +31,12 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         if: steps.changed.outputs.node == 'true'
         with:
-          node-version: '22.17.1'
+          node-version: '22.23.5'
       - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         if: steps.changed.outputs.node == 'true'
         with:
           path: ~/.npm
-          key: fast-npm-${{ runner.os }}-node22.17.1
+          key: fast-npm-${{ runner.os }}-node22.23.5
       - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         if: steps.changed.outputs.go == 'true'
         with:

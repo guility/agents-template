@@ -18,7 +18,7 @@ python-typecheck:
 
 node-typecheck:
   stage: sast
-  image: node:22.17.1-bookworm-slim
+  image: node:22.23.5-bookworm-slim
   before_script:
     - apt-get update && apt-get install -y --no-install-recommends bash ca-certificates git
     - bash scripts/setup/fetch_language_templates.sh nodejs
