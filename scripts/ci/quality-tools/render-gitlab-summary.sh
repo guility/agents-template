@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ "${CI_PIPELINE_SOURCE:-}" == merge_request_event ]]; then
+if [[ -d artifacts/reports/coverage-image ]]; then
   mkdir -p artifacts/reports/coverage
   for language in python nodejs rust go csharp; do
     source="artifacts/reports/coverage-image/$language"
-    [[ -d "$source" ]] && cp -a "$source" "artifacts/reports/coverage/$language"
+    target="artifacts/reports/coverage/$language"
+    if [[ -d "$source" ]]; then
+      mkdir -p "$target"
+      cp -a "$source/." "$target/"
+    fi
   done
 fi
 

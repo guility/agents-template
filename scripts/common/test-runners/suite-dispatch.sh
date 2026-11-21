@@ -40,6 +40,40 @@ run_requested_suite() {
                 run_csharp_mutation_tests || exit_code=1
             fi
             ;;
+        post-merge)
+            local runner_count=0
+            if [ "$has_python" = true ]; then
+                run_python_integration_tests || exit_code=1
+                run_python_e2e_tests || exit_code=1
+                run_python_mutation_tests || exit_code=1
+                runner_count=$((runner_count + 1))
+            fi
+            if [ "$has_nodejs" = true ]; then
+                run_nodejs_integration_tests || exit_code=1
+                run_nodejs_e2e_tests || exit_code=1
+                run_nodejs_mutation_tests || exit_code=1
+                runner_count=$((runner_count + 1))
+            fi
+            if [ "$has_rust" = true ]; then
+                run_rust_integration_tests || exit_code=1
+                run_rust_e2e_tests || exit_code=1
+                run_rust_mutation_tests || exit_code=1
+                runner_count=$((runner_count + 1))
+            fi
+            if [ "$has_go" = true ]; then
+                run_go_integration_tests || exit_code=1
+                run_go_e2e_tests || exit_code=1
+                run_go_mutation_tests || exit_code=1
+                runner_count=$((runner_count + 1))
+            fi
+            if [ "$has_csharp" = true ]; then
+                run_csharp_integration_tests || exit_code=1
+                run_csharp_e2e_tests || exit_code=1
+                run_csharp_mutation_tests || exit_code=1
+                runner_count=$((runner_count + 1))
+            fi
+            [ "$runner_count" -gt 0 ] || { log_error "No post-merge test runner is configured"; return 1; }
+            ;;
         unit)
             [ "$has_python" != true ] || run_python_unit_tests || exit_code=1
             [ "$has_nodejs" != true ] || run_nodejs_unit_tests || exit_code=1

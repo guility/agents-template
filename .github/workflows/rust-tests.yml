@@ -2,6 +2,8 @@ name: Rust Tests
 
 on:
   workflow_call:
+    inputs:
+      suite: { type: string, required: false, default: all }
 
 jobs:
   rust-test:
@@ -9,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PROJECT_ROOT: ${{ github.workspace }}/src/templates/rust
+      TEST_SUITE: ${{ inputs.suite }}
     defaults:
       run:
         working-directory: src/templates/rust
@@ -31,15 +34,7 @@ jobs:
         run: |
           rustup toolchain install 1.88.0 --profile minimal
           cargo +1.88.0 install cargo-mutants --version 27.1.0 --locked
-      - name: Run unit and native mutation suites
+      - name: Run requested test suites
         run: |
           export RUSTUP_TOOLCHAIN=1.100.0
           bash "$GITHUB_WORKSPACE/scripts/common/run-tests.sh"
-
-      - name: Upload coverage when available
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: coverage-rust
-          path: docs/coverage/rust/**
-          if-no-files-found: warn
-

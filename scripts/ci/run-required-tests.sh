@@ -42,8 +42,13 @@ case "$suite" in
       bash "$root/scripts/ci/test-$runner.sh"
     done
     ;;
+  post-merge)
+    for runner in integration e2e mutation; do
+      bash "$root/scripts/ci/test-$runner.sh"
+    done
+    ;;
   unit|integration|mutation|e2e)
     bash "$root/scripts/ci/test-$suite.sh"
     ;;
-  *) echo "Unsupported required-test suite: $suite" >&2; exit 2 ;;
+  *) echo "Unsupported required-test suite: $suite (expected all, post-merge, unit, integration, mutation, or e2e)" >&2; exit 2 ;;
 esac

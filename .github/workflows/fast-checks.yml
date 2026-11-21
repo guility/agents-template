@@ -25,9 +25,10 @@ jobs:
         run: |
           base="$(bash scripts/common/git/resolve-diff-base.sh "$HEAD_SHA" "$BASE_SHA")"
           changed="$(git diff --name-only "$base" "$HEAD_SHA")"
-          grep -Eq '\.(js|jsx|ts|tsx)$|(^|/)(package\.json|pnpm-lock\.yaml)$' <<< "$changed" && echo 'node=true' >> "$GITHUB_OUTPUT" || echo 'node=false' >> "$GITHUB_OUTPUT"
-          grep -Eq '\.go$|(^|/)go\.(mod|sum)$' <<< "$changed" && echo 'go=true' >> "$GITHUB_OUTPUT" || echo 'go=false' >> "$GITHUB_OUTPUT"
-          grep -Eq '\.rs$|(^|/)(Cargo\.toml|Cargo\.lock|rust-toolchain\.toml)$' <<< "$changed" && echo 'rust=true' >> "$GITHUB_OUTPUT" || echo 'rust=false' >> "$GITHUB_OUTPUT"
+          grep -Eq '\.py$|(^|/)(pyproject\.toml|uv\.lock|ruff\.toml|\.ruff\.toml)$' <<< "$changed" && echo 'python=true' >> "$GITHUB_OUTPUT" || echo 'python=false' >> "$GITHUB_OUTPUT"
+          grep -Eq '\.(js|jsx|ts|tsx)$|(^|/)(package\.json|package-lock\.json|pnpm-lock\.yaml|\.prettierrc([^/]*)|prettier\.config\.[^/]+|\.editorconfig|\.prettierignore)$' <<< "$changed" && echo 'node=true' >> "$GITHUB_OUTPUT" || echo 'node=false' >> "$GITHUB_OUTPUT"
+          grep -Eq '\.go$|(^|/)(go\.(mod|sum)|go\.work(\.sum)?|\.golangci\.(yml|yaml|toml))$' <<< "$changed" && echo 'go=true' >> "$GITHUB_OUTPUT" || echo 'go=false' >> "$GITHUB_OUTPUT"
+          grep -Eq '\.rs$|(^|/)(Cargo\.toml|Cargo\.lock|rust-toolchain(\.toml)?|rustfmt\.toml|\.rustfmt\.toml|clippy\.toml|\.clippy\.toml|\.cargo/config(\.toml)?)$' <<< "$changed" && echo 'rust=true' >> "$GITHUB_OUTPUT" || echo 'rust=false' >> "$GITHUB_OUTPUT"
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         if: steps.changed.outputs.node == 'true'
         with:
@@ -50,7 +51,7 @@ jobs:
             ~/.cache/go-build
             ~/.cache/golangci-lint
             ~/go/bin/golangci-lint
-          key: fast-go-${{ runner.os }}-1.24.2-${{ hashFiles('**/go.sum') }}-2.8.0
+          key: fast-go-${{ runner.os }}-1.24.2-${{ hashFiles('**/go.sum', '**/go.work.sum', '**/go.work') }}-2.8.0
       - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         if: steps.changed.outputs.rust == 'true'
         with:
@@ -72,6 +73,7 @@ jobs:
           bash scripts/ci/checks/install-fast-check-tools.sh "$GITHUB_EVENT_BEFORE" "$GITHUB_SHA"
       - name: Run outgoing-diff checks
         env:
+          CARGO_TARGET_DIR: ${{ runner.temp }}/cargo-target
           GITHUB_EVENT_BEFORE: ${{ github.event.before || github.event.pull_request.base.sha }}
           GITHUB_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: bash scripts/ci/checks/fast-push-checks.sh

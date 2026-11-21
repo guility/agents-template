@@ -19,7 +19,7 @@ publish-quality-metrics:
   extends: .quality-tools-runtime
   stage: publish_metrics
   script:
-    - uv run --project scripts/ci/quality-tools --no-sync python scripts/ci/quality-tools/merge_pipeline_metrics.py --sast-result success --fast-result success --lint-result success --secrets-result success
+    - uv run --project scripts/ci/quality-tools --no-sync python scripts/ci/quality-tools/merge_pipeline_metrics.py --sast-result success --fast-result success --lint-result success --secrets-result success --coverage-root artifacts/reports/coverage-image
     - uv run --project scripts/ci/quality-tools --no-sync python scripts/ci/quality-tools/metrics/render_quality_matrix.py
     - uv run --project scripts/ci/quality-tools --no-sync python scripts/ci/quality-tools/metrics/write_badge_endpoints.py
     - bash scripts/ci/quality-tools/publish-metrics-branch.sh

@@ -35,10 +35,11 @@ jobs:
     uses: ./.github/workflows/image-gate.yml
 
   language-suites:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && github.ref_protected
     needs: image-gate
     uses: ./.github/workflows/language-tests.yml
     with:
+      suite: post-merge
       run_python: true
       run_nodejs: true
       run_rust: true
@@ -46,7 +47,7 @@ jobs:
       run_csharp: true
 
   mutator:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && github.ref_protected
     needs: [language-suites, prebuild-gates]
     uses: ./.github/workflows/mutation-tests.yml
 

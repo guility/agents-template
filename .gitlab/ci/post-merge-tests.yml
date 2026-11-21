@@ -5,11 +5,8 @@ post-merge-python-tests:
     - apt-get update && apt-get install -y --no-install-recommends bash ca-certificates curl git
     - UV_INSTALL_DIR=/usr/local/bin UV_VERSION="$UV_VERSION" bash scripts/ci/checks/install-uv.sh
   script:
-    - bash scripts/ci/run-required-tests.sh python
-    - mkdir -p artifacts/reports/coverage/python
-    - cp src/templates/python/test-results/coverage.xml artifacts/reports/coverage/python/
-  artifacts: { when: always, paths: [artifacts/reports/coverage/python/], expire_in: 30 days }
-  rules: [{ if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH' }]
+    - bash scripts/ci/run-required-tests.sh python post-merge
+  rules: [{ if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"' }]
 
 post-merge-nodejs-tests:
   stage: post_merge
@@ -18,11 +15,8 @@ post-merge-nodejs-tests:
     - apt-get update && apt-get install -y --no-install-recommends bash ca-certificates git
     - corepack enable
   script:
-    - bash scripts/ci/run-required-tests.sh nodejs
-    - mkdir -p artifacts/reports/coverage/nodejs
-    - cp src/templates/nodejs/coverage/lcov.info artifacts/reports/coverage/nodejs/
-  artifacts: { when: always, paths: [artifacts/reports/coverage/nodejs/], expire_in: 30 days }
-  rules: [{ if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH' }]
+    - bash scripts/ci/run-required-tests.sh nodejs post-merge
+  rules: [{ if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"' }]
 
 post-merge-rust-tests:
   stage: post_merge
@@ -32,30 +26,21 @@ post-merge-rust-tests:
     - rustup toolchain install 1.100.0 --profile minimal --component llvm-tools-preview
     - cargo +1.100.0 install cargo-llvm-cov --version 0.9.1 --locked
   script:
-    - bash scripts/ci/run-required-tests.sh rust
-    - mkdir -p artifacts/reports/coverage/rust
-    - cp -a docs/coverage/rust/. artifacts/reports/coverage/rust/
-  artifacts: { when: always, paths: [artifacts/reports/coverage/rust/], expire_in: 30 days }
-  rules: [{ if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH' }]
+    - bash scripts/ci/run-required-tests.sh rust post-merge
+  rules: [{ if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"' }]
 
 post-merge-go-tests:
   stage: post_merge
   image: golang:1.24.2-bookworm
   before_script: [apt-get update && apt-get install -y --no-install-recommends bash ca-certificates curl git]
   script:
-    - bash scripts/ci/run-required-tests.sh go
-    - mkdir -p artifacts/reports/coverage/go
-    - cp src/templates/go/test-results/go-coverage.out artifacts/reports/coverage/go/
-  artifacts: { when: always, paths: [artifacts/reports/coverage/go/], expire_in: 30 days }
-  rules: [{ if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH' }]
+    - bash scripts/ci/run-required-tests.sh go post-merge
+  rules: [{ if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"' }]
 
 post-merge-csharp-tests:
   stage: post_merge
   image: mcr.microsoft.com/dotnet/sdk:10.0.404
   before_script: [apt-get update && apt-get install -y --no-install-recommends bash ca-certificates git]
   script:
-    - bash scripts/ci/run-required-tests.sh csharp
-    - mkdir -p artifacts/reports/coverage/csharp
-    - find src/templates/csharp/test-results -name coverage.cobertura.xml -exec cp {} artifacts/reports/coverage/csharp/ \;
-  artifacts: { when: always, paths: [artifacts/reports/coverage/csharp/], expire_in: 30 days }
-  rules: [{ if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH' }]
+    - bash scripts/ci/run-required-tests.sh csharp post-merge
+  rules: [{ if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"' }]

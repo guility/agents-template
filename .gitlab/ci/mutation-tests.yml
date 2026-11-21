@@ -13,7 +13,7 @@
     when: always
     paths: [artifacts/reports/mutation/]
     expire_in: 30 days
-  rules: [{ if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH' }]
+  rules: [{ if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"' }]
 
 mutator-python:
   extends: .mutator-template
