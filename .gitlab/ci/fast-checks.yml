@@ -1,11 +1,20 @@
 branch-name-validation:
   stage: .pre
   image: alpine:3.21.3
-  before_script: [apk add --no-cache bash git]
   script:
-    - bash scripts/common/validate-branch.sh "${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-$CI_COMMIT_REF_NAME}"
+    - branch="${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-$CI_COMMIT_REF_NAME}"
+    - |
+      case "$branch" in
+        main|dev|test|research/*|feature/*|fix/*) ;;
+        python|nodejs|rust|go|csharp)
+          [ "$CI_PROJECT_NAME" = agents-template-langs ] || exit 2 ;;
+        *) echo "Invalid branch name: $branch" >&2; exit 2 ;;
+      esac
+    - apk add --no-cache bash git
+    - bash scripts/common/validate-branch.sh "$branch"
+  after_script:
     - mkdir -p artifacts/reports/quality
-    - printf 'passed\n' > artifacts/reports/quality/branch.status
+    - if [ "$CI_JOB_STATUS" = success ]; then printf 'passed\n' > artifacts/reports/quality/branch.status; else printf 'failed\n' > artifacts/reports/quality/branch.status; fi
   artifacts:
     when: always
     paths: [artifacts/reports/quality/branch.status]
@@ -19,6 +28,7 @@ fast-universal-checks:
   variables:
     GITLEAKS_INSTALL_DIR: "$CI_PROJECT_DIR/.tools/bin"
     PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+    QUALITY_STATUS_ROOT: "$CI_PROJECT_DIR/artifacts/reports/quality"
   cache:
     key: fast-universal-${CI_COMMIT_REF_SLUG}-gitleaks8.30.1
     paths: [.tools/bin/, .cache/pip/]
@@ -29,10 +39,13 @@ fast-universal-checks:
     - export PATH="$GITLEAKS_INSTALL_DIR:$PATH"
   script:
     - bash scripts/ci/checks/fast-push-checks.sh "${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-$CI_COMMIT_REF_NAME}" "${CI_MERGE_REQUEST_DIFF_BASE_SHA:-$CI_COMMIT_BEFORE_SHA}" "$CI_COMMIT_SHA" universal
+  after_script:
     - mkdir -p artifacts/reports/quality
-    - printf 'passed\n' > artifacts/reports/quality/fast.status
+    - if [ "$CI_JOB_STATUS" = success ]; then printf 'passed\n' > artifacts/reports/quality/fast.status; else printf 'failed\n' > artifacts/reports/quality/fast.status; fi
   artifacts:
     when: always
-    paths: [artifacts/reports/quality/fast.status]
+    paths:
+      - artifacts/reports/quality/fast.status
+      - artifacts/reports/quality/secrets/fast.status
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push" || $CI_PIPELINE_SOURCE == "merge_request_event"'

@@ -14,9 +14,10 @@ stages:
   - tests
   - post_merge
   - push
+  - publish_metrics
+  - summary
   - fetch_secrets
   - deploy
-  - publish_metrics
   - .post
 
 include:

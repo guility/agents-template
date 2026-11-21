@@ -80,8 +80,7 @@ def main():
     component["metrics"].update(metrics)
     report = Path("docs/quality/reports") / f"{args.component}.md"
     report.parent.mkdir(parents=True, exist_ok=True)
-    run_url = os.environ.get("GITHUB_RUN_URL", os.environ.get("CI_PIPELINE_URL"))
-    component["report"] = run_url or f"reports/{report.name}"
+    component["report"] = f"reports/{report.name}"
     report.write_text(
         f"# {component['name']} quality report\n\n"
         f"Commit: `{data['commit']}`\n\n"

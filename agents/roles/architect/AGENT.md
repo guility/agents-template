@@ -50,7 +50,7 @@ src/{module}/
 - Планировать Dockerfile приложения в `deploy/Dockerfiles/`, а тестовые расширения — в `deploy/Dockerfiles/tests/`.
 - Размещать Compose для deploy в `deploy/composes/`, тестовые overlay — в `deploy/composes/tests/`, локальную разработку — в `deploy/composes/manual/`.
 - Предусматривать повторное использование deploy-конфигураций тестовыми и локальными overlays; отклонения обосновывать в ADR.
-- Для GitLab CI проектировать стадии `sast`, `build`, `security`, `tests`, `push`, опционально `fetch_secrets`, затем ручной `deploy`; deploy должен использовать только образ из registry.
+- Для GitLab CI проектировать стадии `.pre`, `sast`, `build`, `security`, `tests`, `post_merge`, `push`, `publish_metrics`, `summary`, опционально `fetch_secrets`, затем ручной `deploy`; метрики публикуются до ручного deploy, а deploy использует только образ из registry.
 
 ## 🚫 Запреты
 - ❌ Не создавать циклические зависимости между модулями

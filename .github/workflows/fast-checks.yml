@@ -29,6 +29,23 @@ jobs:
           grep -Eq '\.(js|jsx|ts|tsx)$|(^|/)(package\.json|package-lock\.json|pnpm-lock\.yaml|\.prettierrc([^/]*)|prettier\.config\.[^/]+|\.editorconfig|\.prettierignore)$' <<< "$changed" && echo 'node=true' >> "$GITHUB_OUTPUT" || echo 'node=false' >> "$GITHUB_OUTPUT"
           grep -Eq '\.go$|(^|/)(go\.(mod|sum)|go\.work(\.sum)?|\.golangci\.(yml|yaml|toml))$' <<< "$changed" && echo 'go=true' >> "$GITHUB_OUTPUT" || echo 'go=false' >> "$GITHUB_OUTPUT"
           grep -Eq '\.rs$|(^|/)(Cargo\.toml|Cargo\.lock|rust-toolchain(\.toml)?|rustfmt\.toml|\.rustfmt\.toml|clippy\.toml|\.clippy\.toml|\.cargo/config(\.toml)?)$' <<< "$changed" && echo 'rust=true' >> "$GITHUB_OUTPUT" || echo 'rust=false' >> "$GITHUB_OUTPUT"
+      - name: Initialize changed-language lint results
+        env:
+          PYTHON_CHANGED: ${{ steps.changed.outputs.python }}
+          NODE_CHANGED: ${{ steps.changed.outputs.node }}
+          GO_CHANGED: ${{ steps.changed.outputs.go }}
+          RUST_CHANGED: ${{ steps.changed.outputs.rust }}
+          QUALITY_STATUS_ROOT: artifacts/reports/quality
+        run: |
+          mkdir -p "$QUALITY_STATUS_ROOT/lint/fast"
+          for language in python node go rust; do
+            variable="$(printf '%s_CHANGED' "$language" | tr '[:lower:]' '[:upper:]')"
+            if [[ "${!variable}" == true ]]; then
+              component="$language"
+              [[ "$component" != node ]] || component=nodejs
+              printf 'failed\n' > "$QUALITY_STATUS_ROOT/lint/fast/$component.status"
+            fi
+          done
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         if: steps.changed.outputs.node == 'true'
         with:
@@ -73,7 +90,15 @@ jobs:
           bash scripts/ci/checks/install-fast-check-tools.sh "$GITHUB_EVENT_BEFORE" "$GITHUB_SHA"
       - name: Run outgoing-diff checks
         env:
+          QUALITY_STATUS_ROOT: artifacts/reports/quality
           CARGO_TARGET_DIR: ${{ runner.temp }}/cargo-target
           GITHUB_EVENT_BEFORE: ${{ github.event.before || github.event.pull_request.base.sha }}
           GITHUB_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: bash scripts/ci/checks/fast-push-checks.sh
+      - name: Upload fast check result files
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: fast-quality-statuses
+          path: artifacts/reports/quality
+          if-no-files-found: ignore

@@ -73,7 +73,7 @@ bash scripts/setup/fetch_language_templates.sh python
 
 ### 3. Подготовьте общие инструменты
 
-Перед запуском изучите [`scripts/setup/bootstrap.sh`](./scripts/setup/bootstrap.sh): он устанавливает глобальные инструменты разработки и Git hooks. Если такое поведение подходит вашему окружению, выполните:
+Перед первым push изучите [`scripts/setup/bootstrap.sh`](./scripts/setup/bootstrap.sh): он устанавливает глобальные инструменты разработки и включает обязательные Git hooks, в том числе в linked worktree. Выполните его один раз в клоне:
 
 ```bash
 bash scripts/setup/bootstrap.sh

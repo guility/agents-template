@@ -7,7 +7,7 @@
 
 quality-summary:
   extends: .quality-tools-runtime
-  stage: .post
+  stage: summary
   when: always
   script: [bash scripts/ci/quality-tools/render-gitlab-summary.sh]
   artifacts:
@@ -19,9 +19,13 @@ publish-quality-metrics:
   extends: .quality-tools-runtime
   stage: publish_metrics
   script:
-    - uv run --project scripts/ci/quality-tools --no-sync python scripts/ci/quality-tools/merge_pipeline_metrics.py --sast-result success --fast-result success --lint-result success --secrets-result success --coverage-root artifacts/reports/coverage-image
+    - uv run --project scripts/ci/quality-tools --no-sync python scripts/ci/quality-tools/merge_pipeline_metrics.py --sast-result success --secret-status-root artifacts/reports/quality --lint-status-root artifacts/reports/quality/lint --coverage-root artifacts/reports/coverage-image
     - uv run --project scripts/ci/quality-tools --no-sync python scripts/ci/quality-tools/metrics/render_quality_matrix.py
     - uv run --project scripts/ci/quality-tools --no-sync python scripts/ci/quality-tools/metrics/write_badge_endpoints.py
     - bash scripts/ci/quality-tools/publish-metrics-branch.sh
+  artifacts:
+    when: always
+    paths: [docs/quality/]
+    expire_in: 30 days
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"'

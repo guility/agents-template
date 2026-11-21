@@ -2,15 +2,19 @@ fast-python-checks:
   stage: .pre
   needs: [branch-name-validation]
   image: python:3.14.8-slim
-  variables: { GIT_DEPTH: "0", PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip" }
+  variables: { GIT_DEPTH: "0", PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip", QUALITY_STATUS_ROOT: "$CI_PROJECT_DIR/artifacts/reports/quality" }
   cache:
     key: fast-pip-${CI_COMMIT_REF_SLUG}-${CI_PROJECT_NAME}
     paths: [.cache/pip/]
   before_script:
+    - mkdir -p "$QUALITY_STATUS_ROOT/lint/fast" && printf 'failed\n' > "$QUALITY_STATUS_ROOT/lint/fast/python.status"
     - apt-get update && apt-get install -y --no-install-recommends bash git
     - python -m pip install ruff==0.17.6
   script:
     - bash scripts/ci/checks/fast-push-checks.sh "${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-$CI_COMMIT_REF_NAME}" "${CI_MERGE_REQUEST_DIFF_BASE_SHA:-$CI_COMMIT_BEFORE_SHA}" "$CI_COMMIT_SHA" python
+  artifacts:
+    when: always
+    paths: [artifacts/reports/quality/lint/fast/python.status]
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push" || $CI_PIPELINE_SOURCE == "merge_request_event"'
       changes: ['**/*.py', '**/pyproject.toml', '**/uv.lock', '**/ruff.toml', '**/.ruff.toml']

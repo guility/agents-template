@@ -7,8 +7,8 @@ semgrep-sast:
   before_script:
     - bash scripts/setup/fetch_language_templates.sh all
   script:
+    - mkdir -p artifacts/reports/quality && printf 'failed\n' > artifacts/reports/quality/sast.status
     - semgrep scan --config auto --error --metrics off src scripts agents
-    - mkdir -p artifacts/reports/quality
     - printf 'passed\n' > artifacts/reports/quality/sast.status
   artifacts:
     when: always
@@ -29,20 +29,23 @@ quality-metrics:
     - uv sync --project scripts/ci/quality-tools --locked --no-dev
     - bash scripts/setup/fetch_language_templates.sh all
   script:
-    - gitleaks dir --redact --no-banner src/templates
-    - mkdir -p artifacts/reports/quality
-    - printf 'passed\n' > artifacts/reports/quality/secrets.status
+    - mkdir -p artifacts/reports/quality/secrets
+    - printf 'failed\n' > artifacts/reports/quality/secrets/full.status
+    - if gitleaks dir --redact --no-banner .; then printf 'passed\n' > artifacts/reports/quality/secrets/full.status; fi
     - uv run --project scripts/ci/quality-tools --no-sync python scripts/testing/quality_metrics.py --component common scripts
     - for lang in python nodejs rust go csharp; do uv run --project scripts/ci/quality-tools --no-sync python scripts/testing/quality_metrics.py --component "$lang" "src/templates/$lang/src"; done
     - bash scripts/ci/quality-tools/run-dryer.sh src/templates/python src/templates/nodejs src/templates/rust src/templates/go
+    - python scripts/ci/quality-tools/metrics/render_readme_matrix.py
+    - git diff --exit-code -- README.md
     - python scripts/ci/quality-tools/metrics/render_quality_matrix.py
+    - test "$(cat artifacts/reports/quality/secrets/full.status)" = passed
     - cat docs/quality/quality-matrix.md >> "$CI_JOB_SUMMARY"
   artifacts:
     when: always
     paths:
       - docs/quality/
       - artifacts/reports/dryer.txt
-      - artifacts/reports/quality/secrets.status
+      - artifacts/reports/quality/secrets/full.status
     expire_in: 30 days
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'

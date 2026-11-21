@@ -1,11 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+lint_args=()
+if [[ "$QUALITY_RESULT" != skipped ]]; then
+  lint_args+=(--require-slow-lint)
+fi
+sast_result=n/a
+if [[ -f artifacts/reports/quality/sast.status ]]; then
+  sast_result="$(cat artifacts/reports/quality/sast.status)"
+fi
 uv run --project scripts/ci/quality-tools --no-sync python scripts/ci/quality-tools/merge_pipeline_metrics.py \
-  --sast-result "$QUALITY_RESULT" \
-  --fast-result "$FAST_RESULT" \
-  --lint-result "$QUALITY_RESULT" \
-  --secrets-result "$FAST_RESULT"
+  --sast-result "$sast_result" \
+  --secret-status-root artifacts/reports/quality \
+  --lint-status-root artifacts/reports/quality/lint \
+  "${lint_args[@]}"
 uv run --project scripts/ci/quality-tools --no-sync python scripts/ci/quality-tools/metrics/render_quality_matrix.py
 {
   echo '## Pipeline checks'
