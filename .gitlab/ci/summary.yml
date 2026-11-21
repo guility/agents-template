@@ -17,4 +17,4 @@ publish-quality-metrics:
     - python scripts/ci/quality-tools/metrics/write_badge_endpoints.py
     - bash scripts/ci/quality-tools/publish-metrics-branch.sh
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"'

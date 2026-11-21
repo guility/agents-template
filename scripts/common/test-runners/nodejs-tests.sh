@@ -16,15 +16,7 @@ run_nodejs_unit_tests() {
 
     cd "$ROOT_DIR" || return 1
 
-    # Определение менеджера пакетов
-    local runner="npm run test:unit"
-    if [ -f "pnpm-lock.yaml" ]; then
-        runner="corepack pnpm run test:unit"
-    elif [ -f "yarn.lock" ]; then
-        runner="yarn test:unit"
-    fi
-
-    if $runner 2>&1 | tee "$ROOT_DIR/test-results/unit-nodejs.log"; then
+    if npm run test:unit 2>&1 | tee "$ROOT_DIR/test-results/unit-nodejs.log"; then
         log_info "Node.js unit tests passed"
     else
         log_error "Node.js unit tests failed"
@@ -48,11 +40,7 @@ run_nodejs_suite() {
         return 1
     fi
     cd "$ROOT_DIR" || return 1
-    if [ -f "pnpm-lock.yaml" ]; then
-        corepack pnpm run "test:$suite"
-    else
-        npm run "test:$suite"
-    fi
+    npm run "test:$suite"
 }
 
 # Мутационное тестирование для Node.js (stryker)

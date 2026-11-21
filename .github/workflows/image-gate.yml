@@ -33,13 +33,24 @@ jobs:
           echo "$TRIVY_INSTALL_DIR" >> "$GITHUB_PATH"
       - name: Scan built images and locked dependencies
         run: |
+          set +e
           bash scripts/ci/images/scan-images.sh
+          image_result=$?
           bash scripts/ci/images/scan-dependencies.sh
+          dependency_result=$?
+          exit $((image_result || dependency_result))
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
         with:
           name: dependency-metrics
           path: artifacts/reports/dependencies
-          if-no-files-found: error
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: image-security-reports
+          path: artifacts/reports/images
+          if-no-files-found: warn
 
   unit:
     needs: image-security

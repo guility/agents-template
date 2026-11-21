@@ -25,11 +25,18 @@ scan-images:
     - apt-get update && apt-get install -y --no-install-recommends bash ca-certificates curl git
     - TRIVY_INSTALL_DIR=/usr/local/bin TRIVY_VERSION="$TRIVY_VERSION" bash scripts/ci/checks/install-trivy.sh
   script:
-    - sh scripts/ci/images/scan-images.sh
-    - bash scripts/ci/images/scan-dependencies.sh
+    - |
+      set +e
+      sh scripts/ci/images/scan-images.sh
+      image_result=$?
+      bash scripts/ci/images/scan-dependencies.sh
+      dependency_result=$?
+      exit $((image_result || dependency_result))
   artifacts:
     when: always
-    paths: [artifacts/reports/dependencies/]
+    paths:
+      - artifacts/reports/dependencies/
+      - artifacts/reports/images/
     expire_in: 30 days
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
@@ -83,4 +90,4 @@ push-images:
     paths: [artifacts/registry-image-refs.txt]
     expire_in: 30 days
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"'

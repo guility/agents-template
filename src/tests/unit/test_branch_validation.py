@@ -7,6 +7,7 @@ from pathlib import Path
 SCRIPT = Path(__file__).resolve().parents[3] / "scripts/common/validate-branch.sh"
 COMMON_REMOTE = "https://github.com/guility/agents-template.git"
 LANGUAGE_REMOTE = "https://github.com/guility/agents-template-langs.git"
+LANGUAGE_BRANCHES = ("python", "nodejs", "rust", "go", "csharp")
 
 
 def validate(
@@ -60,10 +61,17 @@ class BranchValidationTests(unittest.TestCase):
             with self.subTest(branch=branch):
                 self.assertEqual(validate(branch, COMMON_REMOTE), 2)
 
-    def test_language_branch_is_accepted_only_in_language_repository(self) -> None:
-        self.assertEqual(validate("python", LANGUAGE_REMOTE), 0)
-        self.assertEqual(validate("python", COMMON_REMOTE, allow_override="1"), 2)
+    def test_language_branches_are_accepted_only_in_language_repository(self) -> None:
+        for branch in LANGUAGE_BRANCHES:
+            with self.subTest(branch=branch):
+                self.assertEqual(validate(branch, LANGUAGE_REMOTE), 0)
+                self.assertEqual(validate(branch, COMMON_REMOTE), 2)
+                self.assertEqual(
+                    validate(branch, COMMON_REMOTE, allow_override="1"), 2
+                )
 
     def test_ci_project_identity_limits_language_exception(self) -> None:
-        self.assertEqual(validate("python", COMMON_REMOTE, ci_context=True), 2)
-        self.assertEqual(validate("python", LANGUAGE_REMOTE, ci_context=True), 0)
+        for branch in LANGUAGE_BRANCHES:
+            with self.subTest(branch=branch):
+                self.assertEqual(validate(branch, COMMON_REMOTE, ci_context=True), 2)
+                self.assertEqual(validate(branch, LANGUAGE_REMOTE, ci_context=True), 0)
