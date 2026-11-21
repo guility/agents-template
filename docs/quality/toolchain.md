@@ -2,7 +2,7 @@
 
 ## Fast push checks
 
-The measured push set is Gitleaks for outgoing commits, Lizard CCN for changed source, Ruff check/format, Prettier, `cargo fmt`, Clippy, `gofmt` and `golangci-lint`. A check runs only when its language is present in the changed files. Exact timings are recorded in [`fast-check-benchmark.md`](fast-check-benchmark.md). Tools and their limits are pinned in the workflow and local setup scripts.
+The measured push set is Gitleaks for outgoing commits, Lizard CCN for changed source, Ruff check/format, Prettier, `cargo fmt`, Clippy, `gofmt` and `golangci-lint`. A check runs only when its language is present in the changed files. Clippy and golangci-lint run in this fast class only; slow MR checks do not repeat them in a fresh runner. Their warm-cache timings are below 0.5 seconds per 10,000 lines, while first runs and cache misses are slower. Exact timings are recorded in [`fast-check-benchmark.md`](fast-check-benchmark.md). Tools and their limits are pinned in the workflow and local setup scripts.
 
 ## Full pipeline
 

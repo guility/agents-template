@@ -34,39 +34,6 @@ node-typecheck:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
 
-rust-lint:
-  stage: sast
-  image: rust:1.100.0-slim
-  before_script:
-    - apt-get update && apt-get install -y --no-install-recommends bash ca-certificates git
-    - bash scripts/setup/fetch_language_templates.sh rust
-  script:
-    - cargo clippy --manifest-path src/templates/rust/Cargo.toml --locked --all-targets -- -D warnings
-    - mkdir -p artifacts/reports/quality && printf 'passed\n' > artifacts/reports/quality/lint-rust.status
-  artifacts:
-    when: always
-    paths: [artifacts/reports/quality/lint-rust.status]
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-
-go-lint:
-  stage: sast
-  image: golang:1.24.2-bookworm
-  before_script:
-    - apt-get update && apt-get install -y --no-install-recommends bash ca-certificates git
-    - bash scripts/setup/fetch_language_templates.sh go
-    - go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.8.0
-  script:
-    - cd src/templates/go && "$(go env GOPATH)/bin/golangci-lint" run ./...
-    - mkdir -p artifacts/reports/quality && printf 'passed\n' > artifacts/reports/quality/lint-go.status
-  artifacts:
-    when: always
-    paths: [artifacts/reports/quality/lint-go.status]
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-
 csharp-format:
   stage: sast
   image: mcr.microsoft.com/dotnet/sdk:10.0.404
