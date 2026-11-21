@@ -75,6 +75,7 @@ jobs:
         run: |
           rm src/templates/csharp/packages.lock.json
           dotnet restore src/templates/csharp/DDDTemplate.Tests.csproj --force --no-cache
+          dotnet restore src/templates/csharp/DDDTemplate.Tests.csproj --locked-mode
           python3 - <<'PY'
           import json
           from pathlib import Path
