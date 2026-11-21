@@ -17,11 +17,11 @@ cache="$(mktemp -d)"
 trap 'rm -rf "$cache"' EXIT
 for language in "${languages[@]}"; do
   case "$language" in
-    python) tag=python/v2.0.1 ;;
-    nodejs) tag=nodejs/v1.0.2 ;;
-    rust) tag=rust/v1.0.2 ;;
-    go) tag=go/v1.0.2 ;;
-    csharp) tag=csharp/v1.0.3 ;;
+    python) tag=python/v2.0.2 ;;
+    nodejs) tag=nodejs/v1.0.3 ;;
+    rust) tag=rust/v1.0.3 ;;
+    go) tag=go/v1.0.3 ;;
+    csharp) tag=csharp/v1.0.4 ;;
   esac
   git clone --quiet --depth 1 --branch "$tag" "$repository" "$cache/$language"
   destination="$root/src/templates/$language"

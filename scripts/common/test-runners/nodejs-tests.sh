@@ -32,6 +32,29 @@ run_nodejs_unit_tests() {
     fi
 }
 
+run_nodejs_integration_tests() {
+    run_nodejs_suite integration
+}
+
+run_nodejs_e2e_tests() {
+    run_nodejs_suite e2e
+}
+
+run_nodejs_suite() {
+    local suite="$1"
+    local test_dir="$ROOT_DIR/tests/$suite"
+    if [ ! -d "$test_dir" ] || ! find "$test_dir" -type f -print -quit | grep -q .; then
+        log_error "Node.js $suite test suite is missing or empty"
+        return 1
+    fi
+    cd "$ROOT_DIR" || return 1
+    if [ -f "pnpm-lock.yaml" ]; then
+        corepack pnpm run "test:$suite"
+    else
+        npm run "test:$suite"
+    fi
+}
+
 # Мутационное тестирование для Node.js (stryker)
 run_nodejs_mutation_tests() {
     log_step "Running Node.js mutation testing..."

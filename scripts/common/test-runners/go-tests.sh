@@ -10,8 +10,9 @@ run_go_tests() {
 
     cd "$ROOT_DIR" || return 1
 
-    # Запуск тестов с покрытием
-    if go test ./... -v -coverpkg=./... -coverprofile="$ROOT_DIR/test-results/go-coverage.out" 2>&1 | tee "$ROOT_DIR/test-results/go-tests.log"; then
+    if go test ./tests/unit/... -v -coverpkg=./src/... \
+        -coverprofile="$ROOT_DIR/test-results/go-coverage.out" \
+        2>&1 | tee "$ROOT_DIR/test-results/go-tests.log"; then
         local coverage
         coverage=$(go tool cover -func="$ROOT_DIR/test-results/go-coverage.out" | awk '/^total:/ {print $3}')
         if [ "$coverage" != "100.0%" ]; then
@@ -26,6 +27,25 @@ run_go_tests() {
         log_error "Go tests failed"
         return 1
     fi
+}
+
+run_go_integration_tests() {
+    run_go_suite integration
+}
+
+run_go_e2e_tests() {
+    run_go_suite e2e
+}
+
+run_go_suite() {
+    local suite="$1"
+    local test_dir="$ROOT_DIR/tests/$suite"
+    if [ ! -d "$test_dir" ] || ! find "$test_dir" -type f -print -quit | grep -q .; then
+        log_error "Go $suite test suite is missing or empty"
+        return 1
+    fi
+    cd "$ROOT_DIR" || return 1
+    go test "./tests/$suite/..." -v 2>&1 | tee "$ROOT_DIR/test-results/$suite-go.log"
 }
 
 # Мутационное тестирование для Go (Gremlins)

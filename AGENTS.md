@@ -17,7 +17,7 @@
 
 ## Тестирование и безопасность
 
-- Для unit, integration, mutation и e2e suites CI требует 100% согласованного покрытия; отсутствующая или пустая обязательная suite — ошибка. Unit требуют 100% line coverage и 100% branch coverage там, где инструмент поддерживает её; технически недоступная branch-метрика может быть `n/a` только с ADR и без ослабления line/mutation gates. Integration покрывают задокументированные пути, e2e — критерии приёмки, mutation — применимые мутации.
+- Для unit, integration, mutation и e2e suites CI требует 100% согласованного покрытия; отсутствующая или пустая обязательная suite — ошибка. Unit требуют 100% line и branch coverage там, где инструмент поддерживает метрику; Go сохраняет 100% statement gate, а line/branch отображаются `n/a` по [DECISION-002](docs/design/DECISION-002-go-coverage.md). Ограничение branch coverage Rust зафиксировано в [DECISION-001](docs/design/DECISION-001-rust-branch-coverage.md). Integration покрывают задокументированные пути, e2e — критерии приёмки, mutation — применимые мутации.
 - Полный GitLab pipeline запускает каждый тип suite отдельным обязательным скриптом `scripts/ci/test-{unit,integration,mutation,e2e}.sh`; отсутствующий runner или пропуск suite завершает pipeline ошибкой.
 - Тесты независимы, воспроизводимы и не обращаются к production. Используй Testcontainers для изолированных интеграций.
 - Секреты в коде запрещены. Gitleaks проверяет исходящие коммиты перед push и в CI. Зависимости и построенные образы сканируются на уязвимости; Semgrep выполняет SAST.

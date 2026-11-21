@@ -5,9 +5,6 @@ root="$(git rev-parse --show-toplevel)"
 export PATH="${XDG_BIN_HOME:-$HOME/.local/bin}:$PATH"
 if command -v go >/dev/null; then export PATH="$(go env GOPATH)/bin:$PATH"; fi
 remote_name="${1:-origin}"
-remote_url="$(git remote get-url "$remote_name" 2>/dev/null || true)"
-allow_language=0
-[[ "$remote_url" == *agents-template-langs* ]] && allow_language=1
 refs=()
 while read -r local_ref local_sha remote_ref remote_sha; do
   [[ -n "${local_ref:-}" ]] || continue
@@ -17,7 +14,7 @@ done
 
 for item in "${refs[@]}"; do
   IFS='|' read -r branch _ _ <<< "$item"
-  ALLOW_LANGUAGE_BRANCHES="$allow_language" bash "$root/scripts/common/validate-branch.sh" "$branch"
+  bash "$root/scripts/common/validate-branch.sh" "$branch"
 done
 for item in "${refs[@]}"; do
   IFS='|' read -r branch base head <<< "$item"
@@ -40,5 +37,5 @@ for item in "${refs[@]}"; do
       exit 127
     }
   done
-  ALLOW_LANGUAGE_BRANCHES="$allow_language" bash "$root/scripts/ci/checks/fast-push-checks.sh" "$branch" "$base" "$head"
+  bash "$root/scripts/ci/checks/fast-push-checks.sh" "$branch" "$base" "$head"
 done

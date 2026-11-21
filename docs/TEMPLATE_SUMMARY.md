@@ -36,11 +36,11 @@
 ### 4. Языковые шаблоны (5 языков)
 | Язык | Ветка | Текущий тег |
 |------|-------|-------------|
-| Python | `python` | `python/v2.0.1` (Python 3.14.8) |
-| Node.js/TypeScript | `nodejs` | `nodejs/v1.0.2` |
-| Rust | `rust` | `rust/v1.0.2` |
-| Go | `go` | `go/v1.0.2` |
-| C# | `csharp` | `csharp/v1.0.3` |
+| Python | `python` | `python/v2.0.2` (Python 3.14.8) |
+| Node.js/TypeScript | `nodejs` | `nodejs/v1.0.3` |
+| Rust | `rust` | `rust/v1.0.3` |
+| Go | `go` | `go/v1.0.3` |
+| C# | `csharp` | `csharp/v1.0.4` |
 
 ### 5. Workflow разработки
 ```

@@ -2,10 +2,14 @@
 set -euo pipefail
 
 branch="${1:-${GITHUB_HEAD_REF:-${CI_COMMIT_REF_NAME:-$(git branch --show-current)}}}"
-allow_language="${ALLOW_LANGUAGE_BRANCHES:-0}"
-[[ "${CI_PROJECT_NAME:-}" == "agents-template-langs" ]] && allow_language=1
-github_repo="${GITHUB_REPOSITORY:-}"
-[[ "${github_repo##*/}" == "agents-template-langs" ]] && allow_language=1
+repository="${GITHUB_REPOSITORY:-${CI_PROJECT_PATH:-${CI_PROJECT_NAME:-}}}"
+if [[ -z "$repository" ]]; then
+  remote_url="$(git remote get-url origin 2>/dev/null || true)"
+  repository="${remote_url##*/}"
+  repository="${repository%.git}"
+fi
+allow_language=0
+[[ "${repository##*/}" == "agents-template-langs" ]] && allow_language=1
 
 if [[ -z "$branch" ]]; then
   echo "Branch name is empty" >&2
