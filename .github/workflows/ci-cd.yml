@@ -45,7 +45,8 @@ jobs:
       - env:
           GATE_NAME: fast-checks
           GATE_RESULT: ${{ needs.run-fast-checks.result }}
-        run: bash scripts/ci/checks/status/assert-gate-result.sh "$GATE_NAME" "$GATE_RESULT"
+          GATE_REQUIRED: 'true'
+        run: bash scripts/ci/checks/status/assert-gate-result.sh "$GATE_NAME" "$GATE_RESULT" "$GATE_REQUIRED"
 
   prebuild-gate-status:
     if: always()
