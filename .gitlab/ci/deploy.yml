@@ -11,7 +11,7 @@ deploy-production:
   script:
     - sh scripts/ci/deploy/deploy-images.sh
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"'
       exists:
         - deploy/Dockerfiles/Dockerfile*
         - deploy/Dockerfiles/*.dockerfile

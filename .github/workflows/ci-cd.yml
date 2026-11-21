@@ -51,7 +51,7 @@ jobs:
     uses: ./.github/workflows/mutation-tests.yml
 
   push-images:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && github.ref_protected
     needs: [image-gate, language-suites, mutator]
     permissions:
       contents: read
@@ -81,7 +81,7 @@ jobs:
       publish_result: ${{ needs.publish-quality-metrics.result }}
 
   publish-quality-metrics:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.ref_protected
     needs: [branch-gate, fast-checks, prebuild-gates, image-gate, language-suites, mutator, push-images]
     permissions:
       contents: write
