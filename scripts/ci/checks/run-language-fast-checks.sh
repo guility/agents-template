@@ -7,6 +7,20 @@ shift 2
 files=("$@")
 python_files=() js_files=()
 python_touched=0 node_touched=0 go_touched=0 rust_touched=0
+lint_root="${QUALITY_STATUS_ROOT:-}/lint/fast"
+
+lint_started() {
+  local component="$1"
+  [[ -n "${QUALITY_STATUS_ROOT:-}" ]] || return 0
+  mkdir -p "$lint_root"
+  printf 'failed\n' > "$lint_root/$component.status"
+}
+
+lint_passed() {
+  local component="$1"
+  [[ -n "${QUALITY_STATUS_ROOT:-}" ]] || return 0
+  printf 'passed\n' > "$lint_root/$component.status"
+}
 
 run_required() {
   command -v "$1" >/dev/null || {
@@ -28,14 +42,17 @@ done
 
 if [[ ( "$scope" == all || "$scope" == python ) && "$python_touched" == 1 ]]; then
   run_required ruff Python
+  lint_started python
   if (("${#python_files[@]}")); then
     ruff check "${python_files[@]}" && ruff format --check "${python_files[@]}"
   else
     ruff check "$root" && ruff format --check "$root"
   fi
+  lint_passed python
 fi
 if [[ ( "$scope" == all || "$scope" == nodejs ) && "$node_touched" == 1 ]]; then
   run_required prettier JavaScript/TypeScript
+  lint_started nodejs
   if (("${#js_files[@]}")); then prettier --check "${js_files[@]}"
   else
     mapfile -d '' node_files < <(find "$root" -type f \
@@ -43,12 +60,17 @@ if [[ ( "$scope" == all || "$scope" == nodejs ) && "$node_touched" == 1 ]]; then
       -not -path '*/node_modules/*' -not -path '*/.git/*' -print0)
     (("${#node_files[@]}")) && prettier --check "${node_files[@]}"
   fi
+  lint_passed nodejs
 fi
 if [[ ( "$scope" == all || "$scope" == rust ) && "$rust_touched" == 1 ]]; then
   run_required cargo Rust
+  lint_started rust
   bash "$root/scripts/ci/checks/language/run-rust-fast-checks.sh" "$root" "${files[@]}"
+  lint_passed rust
 fi
 if [[ ( "$scope" == all || "$scope" == go ) && "$go_touched" == 1 ]]; then
   run_required gofmt Go
+  lint_started go
   bash "$root/scripts/ci/checks/language/run-go-fast-checks.sh" "$root" "${files[@]}"
+  lint_passed go
 fi

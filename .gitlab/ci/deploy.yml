@@ -4,6 +4,8 @@ deploy-production:
   needs:
     - job: push-images
       artifacts: true
+    - job: quality-summary
+      artifacts: false
   environment:
     name: production
   when: manual

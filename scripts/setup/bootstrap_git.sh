@@ -5,7 +5,7 @@
 install_git_hooks() {
     log_step "Installing Git hooks..."
     
-    if [ ! -d "$PROJECT_ROOT/.git" ]; then
+    if ! git -C "$PROJECT_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
         log_warn "Not a git repository, skipping hook installation"
         return 0
     fi

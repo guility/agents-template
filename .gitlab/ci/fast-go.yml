@@ -4,6 +4,7 @@ fast-go-checks:
   image: golang:1.24.2-bookworm
   variables:
     GIT_DEPTH: "0"
+    QUALITY_STATUS_ROOT: "$CI_PROJECT_DIR/artifacts/reports/quality"
     GOCACHE: "$CI_PROJECT_DIR/.cache/go-build"
     GOMODCACHE: "$CI_PROJECT_DIR/.cache/go-mod"
     GOLANGCI_LINT_CACHE: "$CI_PROJECT_DIR/.cache/golangci-lint"
@@ -12,11 +13,15 @@ fast-go-checks:
     key: fast-go-${CI_COMMIT_REF_SLUG}-1.24.2-v2.8.0
     paths: [.cache/go-build/, .cache/go-mod/, .cache/golangci-lint/, .tools/go/bin/]
   before_script:
+    - mkdir -p "$QUALITY_STATUS_ROOT/lint/fast" && printf 'failed\n' > "$QUALITY_STATUS_ROOT/lint/fast/go.status"
     - apt-get update && apt-get install -y --no-install-recommends bash git
     - mkdir -p "$GOBIN" && export PATH="$GOBIN:$PATH"
     - if [ ! -x "$GOBIN/golangci-lint" ]; then go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.8.0; fi
   script:
     - bash scripts/ci/checks/fast-push-checks.sh "${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-$CI_COMMIT_REF_NAME}" "${CI_MERGE_REQUEST_DIFF_BASE_SHA:-$CI_COMMIT_BEFORE_SHA}" "$CI_COMMIT_SHA" go
+  artifacts:
+    when: always
+    paths: [artifacts/reports/quality/lint/fast/go.status]
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push" || $CI_PIPELINE_SOURCE == "merge_request_event"'
       changes: ['**/*.go', '**/go.mod', '**/go.sum', '**/go.work', '**/go.work.sum', '**/.golangci.yml', '**/.golangci.yaml', '**/.golangci.toml']

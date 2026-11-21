@@ -15,8 +15,18 @@ jobs:
     name: ${{ github.event_name == 'pull_request' && 'branch-gate' || (github.ref == 'refs/heads/main' && github.ref_protected && 'post-merge-branch-gate') || 'push-branch-gate' }}
     runs-on: ubuntu-latest
     steps:
+      - name: Reject disallowed branch classes before checkout
+        env:
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+        run: |
+          case "$BRANCH_NAME" in
+            main|dev|test|research/*|feature/*|fix/*) ;;
+            python|nodejs|rust|go|csharp)
+              [[ "${GITHUB_REPOSITORY##*/}" == agents-template-langs ]] || exit 2 ;;
+            *) echo "Invalid branch name: $BRANCH_NAME" >&2; exit 2 ;;
+          esac
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Validate branch before other checks
+      - name: Validate full branch reference before other checks
         env:
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
         run: bash scripts/common/validate-branch.sh "$BRANCH_NAME"

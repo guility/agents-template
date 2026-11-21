@@ -14,22 +14,51 @@ if [[ -d artifacts/reports/coverage-image ]]; then
 fi
 
 status() {
-  [[ -f "artifacts/reports/quality/$1.status" ]] && printf success || printf n/a
+  local file="artifacts/reports/quality/$1.status"
+  [[ -f "$file" ]] || { printf n/a; return; }
+  case "$(cat "$file")" in
+    passed|success) printf success ;;
+    failed|failure) printf failed ;;
+    *) printf n/a ;;
+  esac
 }
 
 sast="$(status sast)"
 fast="$(status fast)"
-secrets="$(status secrets)"
-if [[ "$secrets" != success || "$fast" != success ]]; then
-  secrets=n/a
-fi
-lint=success
-for language in python nodejs rust go csharp; do
-  [[ -f "artifacts/reports/quality/lint-$language.status" ]] || lint=n/a
+secrets=passed
+for scan in fast full; do
+  file="artifacts/reports/quality/secrets/$scan.status"
+  if [[ ! -f "$file" ]]; then
+    [[ "$secrets" == failed ]] || secrets=n/a
+    continue
+  fi
+  case "$(cat "$file")" in
+    passed|success|pass) ;;
+    failed|failure|fail) secrets=failed ;;
+    *) [[ "$secrets" == failed ]] || secrets=n/a ;;
+  esac
 done
+lint=success
+lint_measured=0
+for file in artifacts/reports/quality/lint/{fast,slow}/*.status; do
+  [[ -f "$file" ]] || continue
+  lint_value="$(cat "$file")"
+  case "$lint_value" in
+    failed|failure|fail) lint=failed ;;
+    passed|success|pass) lint_measured=$((lint_measured + 1)) ;;
+  esac
+done
+if [[ "$lint" != failed && "$lint_measured" -eq 0 ]]; then lint=n/a; fi
+for file in artifacts/reports/quality/lint/fast/*.status; do
+  [[ -f "$file" ]] || continue
+  [[ "$(cat "$file")" != failed ]] || fast=failed
+done
+lint_args=()
+[[ "$sast" == n/a ]] || lint_args+=(--require-slow-lint)
 uv run --project scripts/ci/quality-tools --no-sync python scripts/ci/quality-tools/merge_pipeline_metrics.py \
-  --sast-result "$sast" --fast-result "$fast" \
-  --lint-result "$lint" --secrets-result "$secrets"
+  --sast-result "$sast" \
+  --secret-status-root artifacts/reports/quality \
+  --lint-status-root artifacts/reports/quality/lint "${lint_args[@]}"
 uv run --project scripts/ci/quality-tools --no-sync python scripts/ci/quality-tools/metrics/render_quality_matrix.py
 {
   printf '\n## CI gate results\n\n| Gate | Result |\n|---|---|\n'

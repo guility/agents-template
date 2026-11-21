@@ -4,7 +4,10 @@ import argparse
 import json
 from pathlib import Path
 
+from metrics.component_reports import render_reports
+from metrics.lint_metrics import lint_result
 from metrics.metric_reports import coverage_metrics, mutation_score, read_counts
+from metrics.security_metrics import sast_result, secrets_result
 
 
 def main():
@@ -18,9 +21,13 @@ def main():
         default=Path("artifacts/reports/dependencies/counts.tsv"),
     )
     parser.add_argument("--sast-result", default="n/a")
-    parser.add_argument("--fast-result", default="n/a")
-    parser.add_argument("--lint-result", default="n/a")
-    parser.add_argument("--secrets-result", default="n/a")
+    parser.add_argument(
+        "--secret-status-root", type=Path, default=Path("artifacts/reports/quality")
+    )
+    parser.add_argument(
+        "--lint-status-root", type=Path, default=Path("artifacts/reports/quality/lint")
+    )
+    parser.add_argument("--require-slow-lint", action="store_true")
     parser.add_argument(
         "--coverage-root", type=Path, default=Path("artifacts/reports/coverage")
     )
@@ -37,12 +44,12 @@ def main():
         score = mutation_score(args.mutation_root / key / ".metrics" / "mutate")
         if score != "n/a":
             metrics["mutation_score"] = score
-        metrics["sast"] = args.sast_result if args.sast_result == "success" else "n/a"
-        metrics["lint"] = "passed" if args.lint_result == "success" else "n/a"
-        if args.secrets_result == "success" or (
-            key == "common" and args.fast_result == "success"
-        ):
-            metrics["secrets"] = "passed"
+        metrics["sast"] = sast_result(args.sast_result)
+        metrics["lint"] = lint_result(
+            args.lint_status_root, key, require_slow=args.require_slow_lint
+        )
+        metrics["secrets"] = secrets_result(args.secret_status_root)
+    render_reports(data, Path("docs/quality/reports"))
     args.metrics.write_text(json.dumps(data, indent=2) + "\n")
 
 

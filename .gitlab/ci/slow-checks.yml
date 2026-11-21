@@ -2,16 +2,17 @@ python-typecheck:
   stage: sast
   image: python:3.14.8-slim
   before_script:
+    - mkdir -p artifacts/reports/quality/lint/slow && printf 'failed\n' > artifacts/reports/quality/lint/slow/python.status
     - apt-get update && apt-get install -y --no-install-recommends bash ca-certificates curl git
     - bash scripts/setup/fetch_language_templates.sh python
     - UV_INSTALL_DIR=/usr/local/bin UV_VERSION="$UV_VERSION" bash scripts/ci/checks/install-uv.sh
     - uv sync --project src/templates/python --locked --all-extras
   script:
     - uv run --project src/templates/python mypy src/templates/python/src
-    - mkdir -p artifacts/reports/quality && printf 'passed\n' > artifacts/reports/quality/lint-python.status
+    - printf 'passed\n' > artifacts/reports/quality/lint/slow/python.status
   artifacts:
     when: always
-    paths: [artifacts/reports/quality/lint-python.status]
+    paths: [artifacts/reports/quality/lint/slow/python.status]
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
@@ -20,16 +21,17 @@ node-typecheck:
   stage: sast
   image: node:22.23.5-bookworm-slim
   before_script:
+    - mkdir -p artifacts/reports/quality/lint/slow && printf 'failed\n' > artifacts/reports/quality/lint/slow/nodejs.status
     - apt-get update && apt-get install -y --no-install-recommends bash ca-certificates git
     - bash scripts/setup/fetch_language_templates.sh nodejs
     - corepack enable
-    - cd src/templates/nodejs && pnpm install --frozen-lockfile
+    - (cd src/templates/nodejs && pnpm install --frozen-lockfile)
   script:
-    - cd src/templates/nodejs && pnpm lint && pnpm build
-    - mkdir -p artifacts/reports/quality && printf 'passed\n' > artifacts/reports/quality/lint-nodejs.status
+    - (cd src/templates/nodejs && pnpm lint && pnpm build)
+    - printf 'passed\n' > artifacts/reports/quality/lint/slow/nodejs.status
   artifacts:
     when: always
-    paths: [artifacts/reports/quality/lint-nodejs.status]
+    paths: [artifacts/reports/quality/lint/slow/nodejs.status]
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
@@ -38,15 +40,16 @@ csharp-format:
   stage: sast
   image: mcr.microsoft.com/dotnet/sdk:10.0.404
   before_script:
+    - mkdir -p artifacts/reports/quality/lint/slow && printf 'failed\n' > artifacts/reports/quality/lint/slow/csharp.status
     - apt-get update && apt-get install -y --no-install-recommends bash ca-certificates git
     - bash scripts/setup/fetch_language_templates.sh csharp
-    - cd src/templates/csharp && dotnet restore DDDTemplate.Tests.csproj --locked-mode
+    - (cd src/templates/csharp && dotnet restore DDDTemplate.Tests.csproj --locked-mode)
   script:
-    - cd src/templates/csharp && dotnet format whitespace --verify-no-changes && dotnet format analyzers --verify-no-changes
-    - mkdir -p artifacts/reports/quality && printf 'passed\n' > artifacts/reports/quality/lint-csharp.status
+    - (cd src/templates/csharp && dotnet format whitespace --verify-no-changes && dotnet format analyzers --verify-no-changes)
+    - printf 'passed\n' > artifacts/reports/quality/lint/slow/csharp.status
   artifacts:
     when: always
-    paths: [artifacts/reports/quality/lint-csharp.status]
+    paths: [artifacts/reports/quality/lint/slow/csharp.status]
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
