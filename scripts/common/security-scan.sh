@@ -126,10 +126,6 @@ scan_python() {
             done
         fi
         
-        if check_tool "safety"; then
-            log_info "Running safety check..."
-            safety check || true
-        fi
     fi
 }
 

@@ -36,8 +36,8 @@
 ### 4. Языковые шаблоны (5 языков)
 | Язык | Ветка | Текущий тег |
 |------|-------|-------------|
-| Python | `python` | `python/v2.0.3` (Python 3.14.8) |
-| Node.js/TypeScript | `nodejs` | `nodejs/v1.0.4` |
+| Python | `python` | `python/v2.0.4` (Python 3.14.8) |
+| Node.js/TypeScript | `nodejs` | `nodejs/v1.0.5` |
 | Rust | `rust` | `rust/v1.0.4` |
 | Go | `go` | `go/v1.0.4` |
 | C# | `csharp` | `csharp/v1.0.6` |

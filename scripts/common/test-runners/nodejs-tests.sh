@@ -16,7 +16,7 @@ run_nodejs_unit_tests() {
 
     cd "$ROOT_DIR" || return 1
 
-    if npm run test:unit 2>&1 | tee "$ROOT_DIR/test-results/unit-nodejs.log"; then
+    if node --run test:unit 2>&1 | tee "$ROOT_DIR/test-results/unit-nodejs.log"; then
         log_info "Node.js unit tests passed"
     else
         log_error "Node.js unit tests failed"
@@ -40,7 +40,7 @@ run_nodejs_suite() {
         return 1
     fi
     cd "$ROOT_DIR" || return 1
-    npm run "test:$suite"
+    node --run "test:$suite"
 }
 
 # Мутационное тестирование для Node.js (stryker)
