@@ -1,7 +1,7 @@
 .quality-tools-runtime:
   image: python:3.14.8-slim
   before_script:
-    - apt-get update && apt-get install -y --no-install-recommends ca-certificates curl
+    - apt-get update && apt-get install -y --no-install-recommends bash ca-certificates curl git
     - UV_INSTALL_DIR=/usr/local/bin UV_VERSION="$UV_VERSION" bash scripts/ci/checks/install-uv.sh
     - uv sync --project scripts/ci/quality-tools --locked --no-dev
 
