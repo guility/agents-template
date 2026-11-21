@@ -26,6 +26,7 @@ class ProtectedPublicationTests(unittest.TestCase):
         self.assertIn("'fast-push-checks'", workflow)
         self.assertIn("'push-prebuild-gates'", workflow)
         self.assertIn("'push-image-gate'", workflow)
+        self.assertIn("GATE_REQUIRED: 'true'", workflow)
         self.assertNotIn("required-gate-checks", workflow)
         self.assertEqual(workflow.count("GATE_REQUIRED: ${{ github.event_name"), 2)
 
