@@ -23,10 +23,10 @@ lint=success
 for language in python nodejs rust go csharp; do
   [[ -f "artifacts/reports/quality/lint-$language.status" ]] || lint=n/a
 done
-python scripts/ci/quality-tools/merge_pipeline_metrics.py \
+uv run --project scripts/ci/quality-tools --no-sync python scripts/ci/quality-tools/merge_pipeline_metrics.py \
   --sast-result "$sast" --fast-result "$fast" \
   --lint-result "$lint" --secrets-result "$secrets"
-python scripts/ci/quality-tools/metrics/render_quality_matrix.py
+uv run --project scripts/ci/quality-tools --no-sync python scripts/ci/quality-tools/metrics/render_quality_matrix.py
 {
   printf '\n## CI gate results\n\n| Gate | Result |\n|---|---|\n'
   printf '| Branch validation | %s |\n' "$(status branch)"

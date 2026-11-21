@@ -1,6 +1,13 @@
-quality-summary:
-  stage: .post
+.quality-tools-runtime:
   image: python:3.14.8-slim
+  before_script:
+    - apt-get update && apt-get install -y --no-install-recommends ca-certificates curl
+    - UV_INSTALL_DIR=/usr/local/bin UV_VERSION="$UV_VERSION" bash scripts/ci/checks/install-uv.sh
+    - uv sync --project scripts/ci/quality-tools --locked --no-dev
+
+quality-summary:
+  extends: .quality-tools-runtime
+  stage: .post
   when: always
   script: [bash scripts/ci/quality-tools/render-gitlab-summary.sh]
   artifacts:
@@ -9,12 +16,12 @@ quality-summary:
     expire_in: 30 days
 
 publish-quality-metrics:
+  extends: .quality-tools-runtime
   stage: publish_metrics
-  image: python:3.14.8-slim
   script:
-    - python scripts/ci/quality-tools/merge_pipeline_metrics.py --sast-result success --fast-result success --lint-result success --secrets-result success
-    - python scripts/ci/quality-tools/metrics/render_quality_matrix.py
-    - python scripts/ci/quality-tools/metrics/write_badge_endpoints.py
+    - uv run --project scripts/ci/quality-tools --no-sync python scripts/ci/quality-tools/merge_pipeline_metrics.py --sast-result success --fast-result success --lint-result success --secrets-result success
+    - uv run --project scripts/ci/quality-tools --no-sync python scripts/ci/quality-tools/metrics/render_quality_matrix.py
+    - uv run --project scripts/ci/quality-tools --no-sync python scripts/ci/quality-tools/metrics/write_badge_endpoints.py
     - bash scripts/ci/quality-tools/publish-metrics-branch.sh
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"'
