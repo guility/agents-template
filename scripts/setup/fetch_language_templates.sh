@@ -17,8 +17,8 @@ cache="$(mktemp -d)"
 trap 'rm -rf "$cache"' EXIT
 for language in "${languages[@]}"; do
   case "$language" in
-    python) tag=python/v2.0.3 ;;
-    nodejs) tag=nodejs/v1.0.4 ;;
+    python) tag=python/v2.0.4 ;;
+    nodejs) tag=nodejs/v1.0.5 ;;
     rust) tag=rust/v1.0.4 ;;
     go) tag=go/v1.0.4 ;;
     csharp) tag=csharp/v1.0.6 ;;
