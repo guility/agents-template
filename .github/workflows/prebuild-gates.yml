@@ -59,17 +59,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22.17.1'
-      - uses: actions/setup-go@v5
-        with:
-          go-version: '1.24.2'
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.404'
       - name: Install Rust and language templates
         run: |
-          rustup toolchain install 1.100.0 --profile minimal --component clippy,rustfmt
           bash scripts/setup/fetch_language_templates.sh all
-      - name: Check Python, Node.js, Rust, Go and C#
+      - name: Check Python, Node.js and C#
         env:
           UV_INSTALL_DIR: ${{ runner.temp }}/uv-bin
           UV_VERSION: 0.13.9
