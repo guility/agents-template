@@ -70,3 +70,22 @@ jobs:
           UV_INSTALL_DIR: ${{ runner.temp }}/uv-bin
           UV_VERSION: 0.13.9
         run: bash scripts/ci/checks/slow-language-checks.sh
+      - name: Diagnose C# lock hashes
+        if: failure()
+        run: |
+          dotnet restore src/templates/csharp/DDDTemplate.Tests.csproj --force --no-cache
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          lock = json.loads(Path("src/templates/csharp/packages.lock.json").read_text())
+          for name, package in lock["dependencies"]["net10.0"].items():
+              if name.lower() in {
+                  "coverlet.collector",
+                  "microsoft.codecoverage",
+                  "microsoft.net.test.sdk",
+                  "microsoft.testplatform.objectmodel",
+                  "microsoft.testplatform.testhost",
+              }:
+                  print(f"{name} {package['resolved']} {package['contentHash']}")
+          PY
