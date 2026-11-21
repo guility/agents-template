@@ -73,6 +73,7 @@ jobs:
       - name: Diagnose C# lock hashes
         if: failure()
         run: |
+          rm src/templates/csharp/packages.lock.json
           dotnet restore src/templates/csharp/DDDTemplate.Tests.csproj --force --no-cache
           python3 - <<'PY'
           import json
