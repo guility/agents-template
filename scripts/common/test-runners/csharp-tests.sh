@@ -76,13 +76,18 @@ run_csharp_category_tests() {
 }
 
 run_csharp_mutation_tests() {
-    local project_file
-    project_file=$(find "$ROOT_DIR" -name "*.csproj" -print -quit)
-    [ -n "$project_file" ] || { log_error "No .csproj file found; cannot run C# mutation tests"; return 1; }
+    [ -n "$(find "$ROOT_DIR" -name "*.csproj" -print -quit)" ] || {
+        log_error "No .csproj file found; cannot run C# mutation tests"
+        return 1
+    }
     command -v dotnet >/dev/null || { log_error "dotnet not found; cannot run C# mutation tests"; return 1; }
-    cd "$(dirname "$project_file")" || return 1
-    dotnet tool restore --tool-manifest .config/dotnet-tools.json
-    dotnet stryker 2>&1 | tee "$ROOT_DIR/test-results/mutation-csharp.log"
+    local manifest="$ROOT_DIR/.config/dotnet-tools.json"
+    [ -f "$manifest" ] || { log_error "C# mutation tool manifest is missing"; return 1; }
+    (
+        cd "$ROOT_DIR"
+        dotnet tool restore --tool-manifest "$manifest"
+        dotnet stryker
+    ) 2>&1 | tee "$ROOT_DIR/test-results/mutation-csharp.log"
 }
 
 # Основная функция
