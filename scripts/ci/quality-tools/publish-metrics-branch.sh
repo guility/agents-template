@@ -6,7 +6,7 @@ branch="${QUALITY_METRICS_BRANCH:-feature/quality-metrics}"
 source_dir="$(mktemp -d)"
 trap 'rm -rf "$source_dir"' EXIT
 cp -a "$root/docs/quality/." "$source_dir/"
-git -C "$root" fetch origin "$branch" 2>/dev/null || true
+git -C "$root" fetch origin "+refs/heads/$branch:refs/remotes/origin/$branch" 2>/dev/null || true
 git -C "$root" clean -fd -- docs/quality
 git -C "$root" restore --source=HEAD --staged --worktree -- docs/quality
 if git -C "$root" show-ref --verify --quiet "refs/remotes/origin/$branch"; then
