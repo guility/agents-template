@@ -2,6 +2,7 @@
 set -euo pipefail
 
 root="${CI_PROJECT_DIR:-$(git rev-parse --show-toplevel)}"
+source "$root/scripts/ci/images/source-label.sh"
 output="$root/artifacts/images"
 prefix="${CI_REGISTRY_IMAGE:-$CI_PROJECT_PATH}"
 commit="${CI_COMMIT_SHA:-$(git rev-parse HEAD)}"
@@ -14,14 +15,8 @@ build_pair() {
   local file="$1" context="$2" name="$3"
   grep -Eiq '^FROM[[:space:]].+[[:space:]]AS[[:space:]]+production[[:space:]]*$' "$file" || { echo "$file lacks production" >&2; exit 1; }
   grep -Eiq '^FROM[[:space:]]+production[[:space:]]+AS[[:space:]]+tests[[:space:]]*$' "$file" || { echo "$file tests must inherit production" >&2; exit 1; }
-  local image_source="${CI_PROJECT_URL:-}"
-  if [[ -n "${GITHUB_REPOSITORY:-}" ]]; then
-    image_source="${GITHUB_SERVER_URL:-https://github.com}/$GITHUB_REPOSITORY"
-  fi
   local source_label=()
-  if [[ -n "$image_source" ]]; then
-    source_label=(--label "org.opencontainers.image.source=$image_source")
-  fi
+  readarray -t source_label < <(image_source_label_args)
   local production="$prefix/$name:$commit-production"
   local tests="$prefix/$name:$commit-tests"
   buildah bud --isolation chroot "${source_label[@]}" -f "$file" --target production -t "$production" "$context"
