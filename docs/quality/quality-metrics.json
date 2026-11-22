@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "commit": "12b60b41dff983b72766a72dc1fae5307091601d",
+  "components": {
+    "common": {
+      "name": "Common",
+      "report": "https://github.com/guility/agents-template/actions/runs/45058099515",
+      "metrics": {
+        "max_ccn": 10,
+        "functions_over_10": 0,
+        "cognitive_complexity_max": 26,
+        "nesting_depth_max": 5,
+        "max_nloc": 56,
+        "halstead_volume_max": 1972.44,
+        "halstead_difficulty_max": 22.45,
+        "halstead_effort_max": 43322.91,
+        "maintainability_index_min": 37.49,
+        "dependency_vulnerabilities": 0,
+        "sast": "passed",
+        "lint": "n/a",
+        "secrets": "passed"
+      }
+    },
+    "python": {
+      "name": "Python",
+      "report": "https://github.com/guility/agents-template/actions/runs/45058099515",
+      "metrics": {
+        "max_ccn": 4,
+        "functions_over_10": 0,
+        "cognitive_complexity_max": 5,
+        "nesting_depth_max": 2,
+        "max_nloc": 7,
+        "halstead_volume_max": 351.75,
+        "halstead_difficulty_max": 10.83,
+        "halstead_effort_max": 3810.6,
+        "maintainability_index_min": 63.2,
+        "dependency_vulnerabilities": 0,
+        "line_coverage": 100.0,
+        "branch_coverage": 100.0,
+        "sast": "passed",
+        "lint": "passed",
+        "secrets": "passed"
+      }
+    },
+    "nodejs": {
+      "name": "Node.js / TypeScript",
+      "report": "https://github.com/guility/agents-template/actions/runs/45058099515",
+      "metrics": {
+        "max_ccn": 4,
+        "functions_over_10": 0,
+        "cognitive_complexity_max": 4,
+        "nesting_depth_max": 1,
+        "max_nloc": 16,
+        "halstead_volume_max": 574.77,
+        "halstead_difficulty_max": 19.89,
+        "halstead_effort_max": 11434.86,
+        "maintainability_index_min": 53.87,
+        "dependency_vulnerabilities": 0,
+        "line_coverage": 100.0,
+        "branch_coverage": 100.0,
+        "sast": "passed",
+        "lint": "passed",
+        "secrets": "passed"
+      }
+    },
+    "rust": {
+      "name": "Rust",
+      "report": "https://github.com/guility/agents-template/actions/runs/45058099515",
+      "metrics": {
+        "max_ccn": 3,
+        "functions_over_10": 0,
+        "cognitive_complexity_max": 1,
+        "nesting_depth_max": 0,
+        "max_nloc": 16,
+        "halstead_volume_max": 578.7,
+        "halstead_difficulty_max": 14.17,
+        "halstead_effort_max": 8198.25,
+        "maintainability_index_min": 53.99,
+        "dependency_vulnerabilities": 0,
+        "line_coverage": 100.0,
+        "branch_coverage": "n/a",
+        "sast": "passed",
+        "lint": "n/a",
+        "secrets": "passed"
+      }
+    },
+    "go": {
+      "name": "Go",
+      "report": "https://github.com/guility/agents-template/actions/runs/45058099515",
+      "metrics": {
+        "max_ccn": 8,
+        "functions_over_10": 0,
+        "cognitive_complexity_max": 16,
+        "nesting_depth_max": 3,
+        "max_nloc": 30,
+        "halstead_volume_max": 1165.57,
+        "halstead_difficulty_max": 15.4,
+        "halstead_effort_max": 17949.77,
+        "maintainability_index_min": 45.23,
+        "dependency_vulnerabilities": 0,
+        "statement_coverage": 100.0,
+        "line_coverage": "n/a",
+        "branch_coverage": "n/a",
+        "sast": "passed",
+        "lint": "n/a",
+        "secrets": "passed"
+      }
+    },
+    "csharp": {
+      "name": "C#",
+      "report": "https://github.com/guility/agents-template/actions/runs/45058099515",
+      "metrics": {
+        "max_ccn": 5,
+        "functions_over_10": 0,
+        "cognitive_complexity_max": 3,
+        "nesting_depth_max": 2,
+        "max_nloc": 15,
+        "halstead_volume_max": 484.3,
+        "halstead_difficulty_max": 14.57,
+        "halstead_effort_max": 6353.5,
+        "maintainability_index_min": 54.87,
+        "dependency_vulnerabilities": 0,
+        "line_coverage": 100.0,
+        "branch_coverage": 100.0,
+        "sast": "passed",
+        "lint": "passed",
+        "secrets": "passed"
+      }
+    }
+  }
+}
