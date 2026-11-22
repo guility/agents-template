@@ -20,7 +20,7 @@ for language in "${languages[@]}"; do
     python) tag=python/v2.0.4 ;;
     nodejs) tag=nodejs/v1.0.5 ;;
     rust) tag=rust/v1.0.4 ;;
-    go) tag=go/v1.0.4 ;;
+    go) tag=go/v1.0.5 ;;
     csharp) tag=csharp/v1.0.6 ;;
   esac
   git clone --quiet --depth 1 --branch "$tag" "$repository" "$cache/$language"
