@@ -106,8 +106,8 @@ def publish_metrics(root: Path) -> None:
     )
 
 
-def read_published_metrics(remote: Path) -> str:
-    ref = "refs/heads/feature/quality-metrics:docs/quality/quality-metrics.json"
+def read_published_file(remote: Path, path: str) -> str:
+    ref = f"refs/heads/feature/quality-metrics:{path}"
     return subprocess.check_output(
         ["git", f"--git-dir={remote}", "show", ref], text=True
     )
@@ -127,9 +127,14 @@ class ComponentReportTests(unittest.TestCase):
             root, remote, metrics = make_metrics_repository(Path(temporary))
             seed_metrics_branch(root, metrics)
             metrics.write_text('{"new": true}\n')
+            (metrics.parent / "component.md").write_text("generated report\n")
             publish_metrics(root)
-            published = read_published_metrics(remote)
-        self.assertEqual('{"new": true}\n', published)
+            metrics_output = read_published_file(
+                remote, "docs/quality/quality-metrics.json"
+            )
+            report_output = read_published_file(remote, "docs/quality/component.md")
+        self.assertEqual('{"new": true}\n', metrics_output)
+        self.assertEqual("generated report\n", report_output)
 
 
 if __name__ == "__main__":
