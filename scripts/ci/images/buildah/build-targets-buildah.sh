@@ -14,12 +14,20 @@ build_pair() {
   local file="$1" context="$2" name="$3"
   grep -Eiq '^FROM[[:space:]].+[[:space:]]AS[[:space:]]+production[[:space:]]*$' "$file" || { echo "$file lacks production" >&2; exit 1; }
   grep -Eiq '^FROM[[:space:]]+production[[:space:]]+AS[[:space:]]+tests[[:space:]]*$' "$file" || { echo "$file tests must inherit production" >&2; exit 1; }
+  local image_source="${CI_PROJECT_URL:-}"
+  if [[ -n "${GITHUB_REPOSITORY:-}" ]]; then
+    image_source="${GITHUB_SERVER_URL:-https://github.com}/$GITHUB_REPOSITORY"
+  fi
+  local source_label=()
+  if [[ -n "$image_source" ]]; then
+    source_label=(--label "org.opencontainers.image.source=$image_source")
+  fi
   local production="$prefix/$name:$commit-production"
   local tests="$prefix/$name:$commit-tests"
-  buildah bud --isolation chroot -f "$file" --target production -t "$production" "$context"
+  buildah bud --isolation chroot "${source_label[@]}" -f "$file" --target production -t "$production" "$context"
   local production_id
   production_id="$(buildah images --format '{{.ID}}' "$production")"
-  buildah bud --isolation chroot -f "$file" --target tests -t "$tests" "$context"
+  buildah bud --isolation chroot "${source_label[@]}" -f "$file" --target tests -t "$tests" "$context"
   local tests_id
   tests_id="$(buildah images --format '{{.ID}}' "$tests")"
   buildah push "$production" "docker-archive:$output/$name-production.tar:$production"
