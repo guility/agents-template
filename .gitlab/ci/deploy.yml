@@ -4,6 +4,8 @@ deploy-production:
   needs:
     - job: push-images
       artifacts: true
+    - job: publish-quality-metrics
+      artifacts: false
     - job: quality-summary
       artifacts: false
   environment:

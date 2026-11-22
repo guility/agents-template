@@ -25,6 +25,9 @@ fi
 git -C "$root" commit -m "ci: publish latest quality metrics"
 if [[ -n "${CI_JOB_TOKEN:-}" && -n "${CI_SERVER_HOST:-}" && -n "${CI_PROJECT_PATH:-}" ]]; then
   git -C "$root" push "${CI_SERVER_PROTOCOL:-https}://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" "HEAD:refs/heads/$branch"
+elif [[ -n "${GITHUB_TOKEN:-}" && -n "${GITHUB_REPOSITORY:-}" ]]; then
+  auth_header="$(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 | tr -d '\n')"
+  git -C "$root" -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth_header" push origin "HEAD:refs/heads/$branch"
 else
   git -C "$root" push origin "HEAD:refs/heads/$branch"
 fi

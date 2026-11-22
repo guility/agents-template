@@ -36,7 +36,7 @@ while IFS= read -r -d '' file; do
 done < <(find "$root/deploy/Dockerfiles" -maxdepth 1 -type f \( -name 'Dockerfile*' -o -name '*.dockerfile' \) -print0 2>/dev/null)
 
 for language in python nodejs rust go csharp; do
-  package="$root/src/templates/$language/template"
+  package="$root/src/templates/$language"
   file="$package/deploy/Dockerfiles/Dockerfile"
   test -f "$file" || { echo "Missing $language production/tests Dockerfile" >&2; exit 1; }
   context="$(mktemp -d)"

@@ -1,163 +1,71 @@
+select_languages() {
+    local -n selected="$1"
+    shift
+    local -a names=(python nodejs rust go csharp)
+    local -a flags=("$@")
+    local index
+    for index in "${!names[@]}"; do
+        if [[ "${flags[$index]}" == true ]]; then
+            selected+=("${names[$index]}")
+        fi
+    done
+}
+
+run_language_suite() {
+    local language="$1" suite="$2"
+    local runner="run_${language}_${suite}_tests"
+    if [[ "$suite" == unit ]]; then
+        case "$language" in
+            rust|go|csharp) runner="run_${language}_tests" ;;
+        esac
+    fi
+    "$runner"
+}
+
+run_for_languages() {
+    local suite="$1" exit_code=0 language
+    shift
+    for language in "$@"; do
+        run_language_suite "$language" "$suite" || exit_code=1
+    done
+    return "$exit_code"
+}
+
+run_suite_matrix() {
+    local suite_list_name="$1" exit_code=0 language suite
+    local -n suites="$suite_list_name"
+    shift
+    for language in "$@"; do
+        for suite in "${suites[@]}"; do
+            run_language_suite "$language" "$suite" || exit_code=1
+        done
+    done
+    return "$exit_code"
+}
+
+run_required_suite() {
+    local suite="$1" error="$2"
+    shift 2
+    if [[ "$#" -eq 0 ]]; then
+        log_error "$error"
+        return 1
+    fi
+    run_for_languages "$suite" "$@"
+}
+
 run_requested_suite() {
     local suite="$1"
-    local has_python="$2"
-    local has_nodejs="$3"
-    local has_rust="$4"
-    local has_go="$5"
-    local has_csharp="$6"
-    local exit_code=0
-
+    shift
+    local -a languages=() all_suites=(unit integration e2e mutation)
+    local -a post_merge_suites=(integration e2e mutation)
+    select_languages languages "$@"
     case "$suite" in
-        all)
-            if [ "$has_python" = true ]; then
-                run_python_unit_tests || exit_code=1
-                run_python_integration_tests || exit_code=1
-                run_python_e2e_tests || exit_code=1
-                run_python_mutation_tests || exit_code=1
-            fi
-            if [ "$has_nodejs" = true ]; then
-                run_nodejs_unit_tests || exit_code=1
-                run_nodejs_integration_tests || exit_code=1
-                run_nodejs_e2e_tests || exit_code=1
-                run_nodejs_mutation_tests || exit_code=1
-            fi
-            if [ "$has_rust" = true ]; then
-                run_rust_tests || exit_code=1
-                run_rust_integration_tests || exit_code=1
-                run_rust_e2e_tests || exit_code=1
-                run_rust_mutation_tests || exit_code=1
-            fi
-            if [ "$has_go" = true ]; then
-                run_go_tests || exit_code=1
-                run_go_integration_tests || exit_code=1
-                run_go_e2e_tests || exit_code=1
-                run_go_mutation_tests || exit_code=1
-            fi
-            if [ "$has_csharp" = true ]; then
-                run_csharp_tests || exit_code=1
-                run_csharp_integration_tests || exit_code=1
-                run_csharp_e2e_tests || exit_code=1
-                run_csharp_mutation_tests || exit_code=1
-            fi
-            ;;
-        post-merge)
-            local runner_count=0
-            if [ "$has_python" = true ]; then
-                run_python_integration_tests || exit_code=1
-                run_python_e2e_tests || exit_code=1
-                run_python_mutation_tests || exit_code=1
-                runner_count=$((runner_count + 1))
-            fi
-            if [ "$has_nodejs" = true ]; then
-                run_nodejs_integration_tests || exit_code=1
-                run_nodejs_e2e_tests || exit_code=1
-                run_nodejs_mutation_tests || exit_code=1
-                runner_count=$((runner_count + 1))
-            fi
-            if [ "$has_rust" = true ]; then
-                run_rust_integration_tests || exit_code=1
-                run_rust_e2e_tests || exit_code=1
-                run_rust_mutation_tests || exit_code=1
-                runner_count=$((runner_count + 1))
-            fi
-            if [ "$has_go" = true ]; then
-                run_go_integration_tests || exit_code=1
-                run_go_e2e_tests || exit_code=1
-                run_go_mutation_tests || exit_code=1
-                runner_count=$((runner_count + 1))
-            fi
-            if [ "$has_csharp" = true ]; then
-                run_csharp_integration_tests || exit_code=1
-                run_csharp_e2e_tests || exit_code=1
-                run_csharp_mutation_tests || exit_code=1
-                runner_count=$((runner_count + 1))
-            fi
-            [ "$runner_count" -gt 0 ] || { log_error "No post-merge test runner is configured"; return 1; }
-            ;;
-        unit)
-            [ "$has_python" != true ] || run_python_unit_tests || exit_code=1
-            [ "$has_nodejs" != true ] || run_nodejs_unit_tests || exit_code=1
-            [ "$has_rust" != true ] || run_rust_tests || exit_code=1
-            [ "$has_go" != true ] || run_go_tests || exit_code=1
-            [ "$has_csharp" != true ] || run_csharp_tests || exit_code=1
-            ;;
-        integration)
-            local runner_count=0
-            if [ "$has_python" = true ]; then
-                run_python_integration_tests || exit_code=1
-                runner_count=$((runner_count + 1))
-            fi
-            if [ "$has_nodejs" = true ]; then
-                run_nodejs_integration_tests || exit_code=1
-                runner_count=$((runner_count + 1))
-            fi
-            if [ "$has_rust" = true ]; then
-                run_rust_integration_tests || exit_code=1
-                runner_count=$((runner_count + 1))
-            fi
-            if [ "$has_go" = true ]; then
-                run_go_integration_tests || exit_code=1
-                runner_count=$((runner_count + 1))
-            fi
-            if [ "$has_csharp" = true ]; then
-                run_csharp_integration_tests || exit_code=1
-                runner_count=$((runner_count + 1))
-            fi
-            [ "$runner_count" -gt 0 ] || { log_error "No integration test runner is configured"; return 1; }
-            ;;
-        e2e)
-            local runner_count=0
-            if [ "$has_python" = true ]; then
-                run_python_e2e_tests || exit_code=1
-                runner_count=$((runner_count + 1))
-            fi
-            if [ "$has_nodejs" = true ]; then
-                run_nodejs_e2e_tests || exit_code=1
-                runner_count=$((runner_count + 1))
-            fi
-            if [ "$has_rust" = true ]; then
-                run_rust_e2e_tests || exit_code=1
-                runner_count=$((runner_count + 1))
-            fi
-            if [ "$has_go" = true ]; then
-                run_go_e2e_tests || exit_code=1
-                runner_count=$((runner_count + 1))
-            fi
-            if [ "$has_csharp" = true ]; then
-                run_csharp_e2e_tests || exit_code=1
-                runner_count=$((runner_count + 1))
-            fi
-            [ "$runner_count" -gt 0 ] || { log_error "No e2e test runner is configured"; return 1; }
-            ;;
-        mutation)
-            local runner_count=0
-            if [ "$has_python" = true ]; then
-                run_python_mutation_tests || exit_code=1
-                runner_count=$((runner_count + 1))
-            fi
-            if [ "$has_nodejs" = true ]; then
-                run_nodejs_mutation_tests || exit_code=1
-                runner_count=$((runner_count + 1))
-            fi
-            if [ "$has_rust" = true ]; then
-                run_rust_mutation_tests || exit_code=1
-                runner_count=$((runner_count + 1))
-            fi
-            if [ "$has_go" = true ]; then
-                run_go_mutation_tests || exit_code=1
-                runner_count=$((runner_count + 1))
-            fi
-            if [ "$has_csharp" = true ]; then
-                run_csharp_mutation_tests || exit_code=1
-                runner_count=$((runner_count + 1))
-            fi
-            [ "$runner_count" -gt 0 ] || { log_error "No mutation test runner is configured"; return 1; }
-            ;;
-        *)
-            log_error "Unknown test suite: $suite"
-            return 2
-            ;;
+        all) run_suite_matrix all_suites "${languages[@]}" ;;
+        post-merge) run_suite_matrix post_merge_suites "${languages[@]}" ;;
+        unit) run_for_languages unit "${languages[@]}" ;;
+        integration) run_required_suite integration "No integration test runner is configured" "${languages[@]}" ;;
+        e2e) run_required_suite e2e "No e2e test runner is configured" "${languages[@]}" ;;
+        mutation) run_required_suite mutation "No mutation test runner is configured" "${languages[@]}" ;;
+        *) log_error "Unknown test suite: $suite"; return 2 ;;
     esac
-
-    return "$exit_code"
 }

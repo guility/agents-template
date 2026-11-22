@@ -26,6 +26,8 @@ jobs:
             *) echo "Invalid branch name: $BRANCH_NAME" >&2; exit 2 ;;
           esac
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Validate full branch reference before other checks
         env:
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
@@ -56,6 +58,8 @@ jobs:
     name: ${{ github.event_name == 'pull_request' && 'fast-checks' || (github.ref == 'refs/heads/main' && github.ref_protected && 'post-merge-fast-checks') || 'fast-push-checks' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - env:
           GATE_NAME: fast-checks
           GATE_RESULT: ${{ needs.run-fast-checks.result }}
@@ -69,6 +73,8 @@ jobs:
     name: ${{ github.event_name == 'pull_request' && 'prebuild-gates' || (github.ref == 'refs/heads/main' && github.ref_protected && 'post-merge-prebuild-gates') || 'push-prebuild-gates' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - env:
           GATE_NAME: prebuild-gates
           GATE_RESULT: ${{ needs.run-prebuild-gates.result }}
@@ -82,6 +88,8 @@ jobs:
     name: ${{ github.event_name == 'pull_request' && 'image-gate' || (github.ref == 'refs/heads/main' && github.ref_protected && 'post-merge-image-gate') || 'push-image-gate' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - env:
           GATE_NAME: image-gate
           GATE_RESULT: ${{ needs.run-image-gate.result }}

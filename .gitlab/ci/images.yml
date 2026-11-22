@@ -45,6 +45,32 @@ scan-images:
 push-images:
   stage: push
   needs:
+    - job: branch-name-validation
+      artifacts: false
+    - job: fast-universal-checks
+      artifacts: false
+    - job: fast-python-checks
+      optional: true
+      artifacts: false
+    - job: fast-node-checks
+      optional: true
+      artifacts: false
+    - job: fast-rust-checks
+      optional: true
+      artifacts: false
+    - job: fast-go-checks
+      optional: true
+      artifacts: false
+    - job: semgrep-sast
+      artifacts: false
+    - job: quality-metrics
+      artifacts: false
+    - job: python-typecheck
+      artifacts: false
+    - job: node-typecheck
+      artifacts: false
+    - job: csharp-format
+      artifacts: false
     - job: build-images
       artifacts: true
     - job: scan-images
@@ -52,31 +78,22 @@ push-images:
     - job: unit-tests
       artifacts: false
     - job: post-merge-python-tests
-      optional: true
       artifacts: false
     - job: post-merge-nodejs-tests
-      optional: true
       artifacts: false
     - job: post-merge-rust-tests
-      optional: true
       artifacts: false
     - job: post-merge-go-tests
-      optional: true
       artifacts: false
     - job: post-merge-csharp-tests
-      optional: true
       artifacts: false
     - job: mutator-python
-      optional: true
       artifacts: false
     - job: mutator-nodejs
-      optional: true
       artifacts: false
     - job: mutator-rust
-      optional: true
       artifacts: false
     - job: mutator-go
-      optional: true
       artifacts: false
   image:
     name: quay.io/buildah/stable:v1.41.4
